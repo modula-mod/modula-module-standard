@@ -1,0 +1,29 @@
+{
+  "id": "example-module",
+  "name": "Example Module",
+  "subtitle": "Canonical Modula module standard example",
+  "description": "Reference marketplace manifest for Modula modules.",
+  "category": "core",
+  "tags": ["example", "standard", "reference"],
+  "author": "Modula",
+  "publisher": "modula-mod",
+  "pricing": {
+    "model": "free"
+  },
+  "support": {
+    "docs": "./docs",
+    "issues": "https://github.com/modula-mod/modula-module-standard/issues"
+  },
+  "assets": {
+    "icon": "icon.svg",
+    "cover": "cover.png"
+  },
+  "release": {
+    "current": "0.1.0",
+    "channel": "stable"
+  },
+  "compatibility": {
+    "modula_core": ">=1.0.0",
+    "api_version": "1"
+  }
+}

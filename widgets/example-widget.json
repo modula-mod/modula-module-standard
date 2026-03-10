@@ -1,0 +1,19 @@
+{
+  "id": "example-widget",
+  "title": "Example Widget",
+  "description": "Reference widget declaration for Modula modules.",
+  "category": "general",
+  "sizes": ["s", "m", "l"],
+  "permissions": ["profile.read"],
+  "settings": {
+    "refreshInterval": {
+      "type": "number",
+      "default": 60
+    }
+  },
+  "component": "frontend/components/widgets/ExampleWidget.svelte",
+  "fallback": {
+    "type": "empty-state",
+    "message": "No data available"
+  }
+}

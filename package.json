@@ -1,0 +1,11 @@
+{
+  "name": "modula-module-standard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "validate": "node scripts/validate-module.mjs",
+    "build": "node scripts/build-module.mjs",
+    "pack": "node scripts/pack-module.mjs",
+    "release": "node scripts/release-module.mjs"
+  }
+}

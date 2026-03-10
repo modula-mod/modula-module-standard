@@ -1,0 +1,44 @@
+{
+  "id": "example-module",
+  "name": "Example Module",
+  "namespace": "modula.example",
+  "version": "0.1.0",
+  "class": "hybrid",
+  "entry_points": {
+    "frontend": "frontend/routes/+page.svelte",
+    "backend": "backend/router.py",
+    "settings": "frontend/routes/settings/+page.svelte"
+  },
+  "routes": [
+    {
+      "path": "/example",
+      "kind": "surface"
+    }
+  ],
+  "widgets": [
+    "example-widget"
+  ],
+  "permissions": [
+    "profile.read"
+  ],
+  "capabilities": [
+    "widget.render",
+    "search.index"
+  ],
+  "dependencies": {
+    "required": [],
+    "optional": [
+      "profile",
+      "notifications"
+    ]
+  },
+  "compatibility": {
+    "modula_core": ">=1.0.0",
+    "api_version": "1"
+  },
+  "update_channel": "stable",
+  "hooks": {
+    "install": "backend/install.py",
+    "uninstall": "backend/uninstall.py"
+  }
+}

@@ -1,0 +1,24 @@
+# Dependency caches
+node_modules/
+frontend/node_modules/
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Build artifacts
+dist/
+frontend/dist/
+module.zip
+
+# Logs and temp files
+*.log
+*.bak
+*~
+
+# Local env/secrets
+.env
+.env.*
+
+# OS/editor noise
+.DS_Store

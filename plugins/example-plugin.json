@@ -1,0 +1,35 @@
+{
+  "id": "example-plugin",
+  "type": "plugin",
+  "version": "0.1.0",
+  "extends": {
+    "type": "module",
+    "id": "example-module",
+    "module_id": "example-module",
+    "min_version": "0.1.0"
+  },
+  "runtime": {
+    "mode": "svelte_component",
+    "entry": "frontend/dist/modula-entry.js",
+    "component_export": "default",
+    "style": "frontend/dist/modula-entry.css"
+  },
+  "surfaces": [
+    {
+      "id": "plugin-surface",
+      "title": "Plugin Surface",
+      "type": "standalone_page",
+      "route": "/example/plugin",
+      "mount": "module.page"
+    }
+  ],
+  "dependencies": [
+    {
+      "type": "module",
+      "id": "example-module",
+      "min_version": "0.1.0",
+      "required": true,
+      "display": "Requires Example Module minimum version 0.1.0"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "example-automation-pack",
+  "name": "Example Automation Pack",
+  "description": "Canonical starter metadata for an automation pack.",
+  "publisher": {
+    "id": "your-handle",
+    "name": "Your Name",
+    "handle": "your-handle",
+    "type": "identity",
+    "verified": false
+  },
+  "homepage": "https://example.com",
+  "support_url": "https://example.com/support",
+  "release": {
+    "current": "0.1.0",
+    "channel": "stable"
+  }
+}

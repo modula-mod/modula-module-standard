@@ -5,7 +5,6 @@
   "scripts": {
     "validate": "node scripts/validate-module.mjs",
     "build": "node scripts/build-module.mjs",
-    "pack": "node scripts/pack-module.mjs",
-    "release": "node scripts/release-module.mjs"
+    "pack": "node scripts/pack-module.mjs"
   }
 }

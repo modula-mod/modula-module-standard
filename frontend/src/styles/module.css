@@ -1,0 +1,16 @@
+:root {
+  --module-border: var(--token-border, rgba(255, 255, 255, 0.12));
+  --module-surface: var(--token-surface, rgba(14, 18, 26, 0.72));
+  --module-muted: var(--token-text-secondary, #9aa6ba);
+}
+
+.surface-card {
+  border-radius: 12px;
+  border: 1px solid var(--module-border);
+  background: var(--module-surface);
+  padding: 0.9rem;
+}
+
+.muted {
+  color: var(--module-muted);
+}

@@ -1,0 +1,37 @@
+{
+  "id": "example-automation-pack",
+  "slug": "example-automation-pack",
+  "name": "Example Automation Pack",
+  "version": "0.1.0",
+  "package_kind": "automation-pack",
+  "class": "service",
+  "skills_provided": [
+    {
+      "id": "example.summary.helper",
+      "title": "Example summary helper",
+      "description": "Starter skill metadata.",
+      "safe_by_default": true,
+      "requires_confirmation": false
+    }
+  ],
+  "workflow_templates_provided": [
+    {
+      "id": "example.daily.summary",
+      "title": "Daily summary",
+      "description": "Starter workflow template metadata.",
+      "trigger_types_supported": ["schedule"],
+      "steps": ["notifications.read-all"],
+      "safe_by_default": true,
+      "requires_confirmation": false
+    }
+  ],
+  "automation_pack_contents": [
+    {
+      "id": "example-pack",
+      "title": "Example pack",
+      "description": "Starter pack metadata.",
+      "safe_by_default": true,
+      "requires_confirmation": false
+    }
+  ]
+}

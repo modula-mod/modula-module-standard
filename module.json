@@ -1,44 +1,73 @@
 {
   "id": "example-module",
-  "name": "Example Module",
-  "namespace": "modula.example",
+  "type": "module",
   "version": "0.1.0",
-  "class": "hybrid",
-  "entry_points": {
-    "frontend": "frontend/routes/+page.svelte",
-    "backend": "backend/router.py",
-    "settings": "frontend/routes/settings/+page.svelte"
+  "runtime": {
+    "mode": "svelte_component",
+    "entry": "frontend/dist/modula-entry.js",
+    "component_export": "default",
+    "style": "frontend/dist/modula-entry.css",
+    "fallback": {
+      "mode": "iframe_index_html",
+      "entry": "index.html"
+    }
   },
-  "routes": [
+  "api": {
+    "namespace": "/api/modula/modules/example-module",
+    "backend": "backend/router.py"
+  },
+  "backend": {
+    "enabled": true,
+    "namespace": "/api/modula/modules/example-module",
+    "router": "backend/router.py",
+    "models": "backend/models.py",
+    "schemas": "backend/schemas.py",
+    "service": "backend/service.py",
+    "repository": "backend/repository.py",
+    "permissions": "backend/permissions.py",
+    "install": "backend/install.py",
+    "uninstall": "backend/uninstall.py",
+    "migrations": [
+      "backend/migrations/0001_init.sql"
+    ],
+    "health": "/api/modula/modules/example-module/health"
+  },
+  "surfaces": [
     {
-      "path": "/example",
-      "kind": "surface"
+      "id": "main",
+      "title": "Main",
+      "type": "page",
+      "route": "/example",
+      "entry": "main"
+    },
+    {
+      "id": "explore",
+      "title": "Explore",
+      "type": "page",
+      "route": "/example/explore",
+      "entry": "explore"
+    },
+    {
+      "id": "settings",
+      "title": "Settings",
+      "type": "page",
+      "route": "/example/settings",
+      "entry": "settings"
     }
   ],
-  "widgets": [
-    "example-widget"
-  ],
-  "permissions": [
-    "profile.read"
-  ],
-  "capabilities": [
-    "widget.render",
-    "search.index"
-  ],
-  "dependencies": {
-    "required": [],
-    "optional": [
-      "profile",
-      "notifications"
+  "plugins": {
+    "supports": true,
+    "extension_points": [
+      "surfaces",
+      "actions",
+      "composer.attachments",
+      "feed.cards"
     ]
   },
-  "compatibility": {
-    "modula_core": ">=1.0.0",
-    "api_version": "1"
+  "theme": {
+    "uses_modula_tokens": true
   },
-  "update_channel": "stable",
-  "hooks": {
-    "install": "backend/install.py",
-    "uninstall": "backend/uninstall.py"
+  "surface_style": {
+    "uses_modula_surface": true
   }
 }

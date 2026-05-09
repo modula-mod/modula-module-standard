@@ -533,3 +533,14 @@ Rules:
 - `docs/creator-lifecycle.md`
 - `docs/automation-packs.md`
 - `docs/security-checklist.md`
+
+## Advanced package contracts
+
+Modules generated from this standard should expose widgets, functions, permissions,
+notifications, and events in both `module.json` and `manifest.json`. Runtime hosts
+and Settings Modules can then explain what a module can render, call, require, and
+emit before it is installed or enabled.
+
+Release versions are immutable. If a published package archive is stale or missing
+runtime features, do not overwrite the same tag. Bump the module version, rebuild,
+pack, validate, publish a new release asset, then install/update from that artifact.

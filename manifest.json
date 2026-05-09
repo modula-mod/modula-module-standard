@@ -35,5 +35,52 @@
     "entry": "frontend/dist/modula-entry.js",
     "style": "frontend/dist/modula-entry.css",
     "fallback_entry": "index.html"
+  },
+  "permissions": [
+    "example.read",
+    "example.write",
+    "example.widget.read",
+    "example.notification.emit"
+  ],
+  "functions": [
+    {
+      "id": "example.list_items",
+      "title": "List items",
+      "permission": "example.read"
+    }
+  ],
+  "widgets": [
+    {
+      "id": "example-feed-widget",
+      "title": "Example Feed Widget",
+      "surface": "board"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "example.item.created",
+      "title": "Item created",
+      "default_enabled": true
+    }
+  ],
+  "events": [
+    {
+      "id": "example.item.created",
+      "direction": "emitted"
+    },
+    {
+      "id": "example.refresh.requested",
+      "direction": "accepted"
+    }
+  ],
+  "marketplace": {
+    "sections": [
+      "overview",
+      "widgets",
+      "functions",
+      "permissions",
+      "notifications",
+      "events"
+    ]
   }
 }

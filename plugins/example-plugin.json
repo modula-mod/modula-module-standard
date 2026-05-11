@@ -31,5 +31,61 @@
       "required": true,
       "display": "Requires Example Module minimum version 0.1.0"
     }
-  ]
+  ],
+  "widgets": [
+    {
+      "id": "example-plugin-widget",
+      "title": "Example Plugin Widget",
+      "description": "Board widget contributed by a plugin extension.",
+      "surface": "board",
+      "size": "small",
+      "entry": "widgets/PluginWidget",
+      "permissions": [
+        "example.plugin.read"
+      ],
+      "data_source": "/api/modula/plugins/example-plugin/widgets",
+      "refresh_policy": "on_focus_or_120s"
+    }
+  ],
+  "functions": [
+    {
+      "id": "example.plugin.read",
+      "title": "Read plugin data",
+      "permission": "example.plugin.read"
+    },
+    {
+      "id": "example.plugin.open",
+      "title": "Open plugin surface",
+      "permission": "example.plugin.read"
+    }
+  ],
+  "permissions": [
+    "example.plugin.read",
+    "example.widget.read",
+    "example.notification.emit"
+  ],
+  "notifications": [
+    {
+      "id": "example.plugin.ready",
+      "title": "Plugin ready",
+      "default_enabled": true
+    }
+  ],
+  "settings": {
+    "schema": {
+      "enabled": {
+        "type": "boolean",
+        "default": true
+      },
+      "surface_mode": {
+        "type": "string",
+        "enum": [
+          "inherit",
+          "compact",
+          "expanded"
+        ],
+        "default": "inherit"
+      }
+    }
+  }
 }

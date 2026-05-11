@@ -544,3 +544,18 @@ emit before it is installed or enabled.
 Release versions are immutable. If a published package archive is stale or missing
 runtime features, do not overwrite the same tag. Bump the module version, rebuild,
 pack, validate, publish a new release asset, then install/update from that artifact.
+
+## Phase 5.9 shell-aligned module contract
+
+Every module and plugin should inherit the Modula shell instead of creating a separate app chrome. Use the host-provided theme variables (`--surface-*`, `--text-*`, `--border-*`, `--accent-*`) and avoid hardcoded light/dark panels. Modules render inside shell-owned surfaces; the shell owns sidebar, top controls, profile identity, notifications, settings, and marketplace state.
+
+Required package contract fields:
+
+- `surfaces`: route surfaces mounted by the shell runtime host.
+- `widgets`: Board/profile widgets with `id`, `title`, `description`, `surface`, `size`, `entry`, `permissions`, `data_source`, and `refresh_policy`.
+- `functions`: callable actions with stable namespaced IDs and required permission.
+- `permissions`: minimal grants needed by runtime UI and backend APIs.
+- `notifications`: event channels that the notification engine can expose or audit.
+- `dependencies`: explicit parent module/plugin requirements, especially for plugins.
+
+Plugin packages must declare `type: "plugin"`, an `extends` parent, dependency readiness, route/surface contributions, widgets/functions/permissions/notifications, and a safe missing-parent behavior. Plugins must not replace profile, shell, sidebar, notification, or settings ownership.

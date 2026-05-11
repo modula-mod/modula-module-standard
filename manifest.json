@@ -44,16 +44,52 @@
   ],
   "functions": [
     {
-      "id": "example.list_items",
+      "id": "example.items.read",
       "title": "List items",
       "permission": "example.read"
+    },
+    {
+      "id": "example.item.create",
+      "title": "Create item",
+      "permission": "example.write"
+    },
+    {
+      "id": "example.widgets.render",
+      "title": "Render widgets",
+      "permission": "example.widget.read"
+    },
+    {
+      "id": "example.notifications.emit",
+      "title": "Emit notifications",
+      "permission": "example.notification.emit"
     }
   ],
   "widgets": [
     {
       "id": "example-feed-widget",
       "title": "Example Feed Widget",
-      "surface": "board"
+      "description": "Board-ready preview widget exposed by the module.",
+      "surface": "board",
+      "size": "medium",
+      "entry": "widgets/BoardWidget",
+      "permissions": [
+        "example.read"
+      ],
+      "data_source": "/api/modula/example-module/items",
+      "refresh_policy": "on_focus_or_60s"
+    },
+    {
+      "id": "example-stats-widget",
+      "title": "Example Stats Widget",
+      "description": "Compact module summary for profile and Board.",
+      "surface": "board",
+      "size": "small",
+      "entry": "widgets/StatsWidget",
+      "permissions": [
+        "example.read"
+      ],
+      "data_source": "/api/modula/example-module/summary",
+      "refresh_policy": "on_focus_or_120s"
     }
   ],
   "notifications": [
@@ -61,6 +97,11 @@
       "id": "example.item.created",
       "title": "Item created",
       "default_enabled": true
+    },
+    {
+      "id": "example.item.updated",
+      "title": "Item updated",
+      "default_enabled": false
     }
   ],
   "events": [

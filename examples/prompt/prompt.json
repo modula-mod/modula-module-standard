@@ -1,0 +1,9 @@
+{
+  "id": "example-prompt",
+  "type": "prompt",
+  "version": "0.1.0",
+  "variables": ["topic"],
+  "template": "Summarize {{topic}} with evidence and caveats.",
+  "permissions": ["example.read"],
+  "model_compatibility": ["chat", "reasoning"]
+}

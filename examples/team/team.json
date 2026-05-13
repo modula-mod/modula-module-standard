@@ -1,0 +1,8 @@
+{
+  "id": "example.team",
+  "type": "team",
+  "version": "0.1.0",
+  "roles": ["owner", "editor", "viewer"],
+  "permissions": ["example.read", "example.write"],
+  "owner_scope": "workspace"
+}

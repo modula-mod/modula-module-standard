@@ -1,0 +1,10 @@
+{
+  "id": "example.job",
+  "type": "job",
+  "version": "0.1.0",
+  "schedule": "manual",
+  "trigger": "example.refresh.requested",
+  "permissions": ["example.write"],
+  "owner_scope": "user",
+  "retry_policy": { "max_attempts": 3, "backoff_seconds": 30 }
+}

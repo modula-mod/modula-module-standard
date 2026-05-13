@@ -1,0 +1,14 @@
+{
+  "id": "example-tool",
+  "type": "tool",
+  "version": "0.1.0",
+  "operations": [
+    {
+      "id": "example.search",
+      "input_schema": { "type": "object", "properties": { "query": { "type": "string" } } },
+      "output_schema": { "type": "object" }
+    }
+  ],
+  "permissions": ["example.read"],
+  "rate_limits": { "per_minute": 60 }
+}

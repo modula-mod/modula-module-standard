@@ -1,0 +1,9 @@
+{
+  "id": "example-plugin-widget",
+  "title": "Example Plugin Widget",
+  "surface": "board",
+  "size": "small",
+  "permissions": ["example.read"],
+  "data_source": "/api/modula/plugins/example-plugin/health",
+  "refresh_policy": "on_focus_or_120s"
+}

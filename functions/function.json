@@ -1,0 +1,22 @@
+{
+  "id": "example.item.create",
+  "title": "Create example item",
+  "description": "Reference function declaration exposed to Modula tools and automation.",
+  "input_schema": {
+    "type": "object",
+    "required": ["title"],
+    "properties": {
+      "title": { "type": "string" },
+      "body": { "type": "string" }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "created_at": { "type": "integer" }
+    }
+  },
+  "permissions": ["example.write"],
+  "runtime": "backend"
+}

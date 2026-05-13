@@ -1,0 +1,11 @@
+{
+  "id": "example.widget",
+  "type": "widget",
+  "version": "0.1.0",
+  "surface_target": "board",
+  "size": "medium",
+  "data_source": "/api/modula/modules/example-module/summary",
+  "refresh_policy": "on_focus_or_120s",
+  "permissions": ["example.widget.read"],
+  "entry": "frontend/dist/modula-entry.js"
+}

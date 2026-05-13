@@ -1,0 +1,12 @@
+{
+  "id": "example.config",
+  "type": "config",
+  "version": "0.1.0",
+  "settings_schema": {
+    "type": "object",
+    "properties": {
+      "enabled": { "type": "boolean", "default": true }
+    }
+  },
+  "owner_scope": "user"
+}

@@ -1,0 +1,7 @@
+[
+  {
+    "id": "example.plugin.event",
+    "title": "Plugin event",
+    "default_enabled": false
+  }
+]

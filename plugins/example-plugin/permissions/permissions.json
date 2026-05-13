@@ -1,0 +1,7 @@
+[
+  {
+    "id": "example.plugin.use",
+    "description": "Use example plugin surfaces and actions.",
+    "risk": "low"
+  }
+]

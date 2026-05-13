@@ -147,5 +147,37 @@
       "id": "example.refresh.requested",
       "direction": "accepted"
     }
-  ]
+  ],
+  "board": [
+    {
+      "id": "example.summary",
+      "title": "Example Summary",
+      "widget": "example-stats-widget",
+      "size": "small"
+    },
+    {
+      "id": "example.quick-action",
+      "title": "Example Quick Action",
+      "widget": "example-feed-widget",
+      "size": "medium"
+    },
+    {
+      "id": "example.recent-activity",
+      "title": "Recent Activity",
+      "widget": "example-feed-widget",
+      "size": "medium"
+    },
+    {
+      "id": "example.stats",
+      "title": "Example Stats",
+      "widget": "example-stats-widget",
+      "size": "small"
+    }
+  ],
+  "update_policy": {
+    "default": "manual",
+    "supports_auto_update": true,
+    "security_updates_auto_apply": false,
+    "preserve_user_version_choice": true
+  }
 }

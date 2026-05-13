@@ -1,0 +1,40 @@
+{
+  "id": "example-plugin",
+  "type": "plugin",
+  "name": "Example Plugin",
+  "version": "0.1.0",
+  "extends": {
+    "type": "module",
+    "id": "example-module",
+    "min_version": "0.1.0"
+  },
+  "dependencies": [
+    {
+      "type": "module",
+      "id": "example-module",
+      "min_version": "0.1.0",
+      "required": true,
+      "display": "Requires Example Module 0.1.0 or newer"
+    }
+  ],
+  "runtime": {
+    "mode": "svelte_component",
+    "entry": "frontend/dist/modula-entry.js",
+    "component_export": "default",
+    "style": "frontend/dist/modula-entry.css"
+  },
+  "surfaces": [
+    {
+      "id": "plugin-surface",
+      "title": "Plugin Surface",
+      "route": "/example/plugin",
+      "surface_type": "page",
+      "visible_in_sidebar": true
+    }
+  ],
+  "widgets": ["widgets/widget.json"],
+  "functions": ["functions/function.json"],
+  "permissions": ["permissions/permissions.json"],
+  "notifications": ["notifications/notifications.json"],
+  "missing_parent_behavior": "block_install_with_explanation"
+}

@@ -1,0 +1,6 @@
+{
+  "id": "example.plugin.action",
+  "title": "Run plugin action",
+  "permissions": ["example.write"],
+  "runtime": "backend"
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "example.item.created",
+    "title": "Item created",
+    "default_enabled": true
+  },
+  {
+    "id": "example.item.updated",
+    "title": "Item updated",
+    "default_enabled": false
+  }
+]

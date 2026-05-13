@@ -1,0 +1,22 @@
+[
+  {
+    "id": "example.read",
+    "description": "Read example module data.",
+    "risk": "low"
+  },
+  {
+    "id": "example.write",
+    "description": "Create and update example module data.",
+    "risk": "medium"
+  },
+  {
+    "id": "example.widget.read",
+    "description": "Render example widgets in Board/profile surfaces.",
+    "risk": "low"
+  },
+  {
+    "id": "example.notification.emit",
+    "description": "Emit example module notification events.",
+    "risk": "medium"
+  }
+]

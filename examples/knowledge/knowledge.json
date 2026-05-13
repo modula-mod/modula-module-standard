@@ -1,0 +1,8 @@
+{
+  "id": "example.knowledge",
+  "type": "knowledge",
+  "version": "0.1.0",
+  "sources": [],
+  "permissions": ["example.read"],
+  "index_policy": "manual"
+}

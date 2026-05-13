@@ -1,0 +1,11 @@
+{
+  "id": "example.surface-style",
+  "type": "surface-style",
+  "version": "0.1.0",
+  "tokens": {
+    "radius": "var(--radius-lg)",
+    "surface": "var(--surface-1)",
+    "border": "var(--border-subtle)"
+  },
+  "supports_modes": ["solid", "glass", "frost", "neumorphism"]
+}

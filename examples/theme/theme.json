@@ -1,0 +1,11 @@
+{
+  "id": "example-theme",
+  "type": "theme",
+  "version": "0.1.0",
+  "tokens": {
+    "color.accent": "var(--accent-primary)",
+    "surface.default": "var(--surface-1)"
+  },
+  "modes": ["light", "dark"],
+  "accessibility": { "min_contrast": "AA" }
+}

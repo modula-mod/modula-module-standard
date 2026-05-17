@@ -1,0 +1,48 @@
+{
+  "id": "unsafe-capability-denial.profile-tab",
+  "slug": "unsafe-capability-denial",
+  "title": "Unsafe Capability Denial",
+  "name": "Unsafe Capability Denial",
+  "version": "0.0.0-denial",
+  "type": "profile_tab",
+  "description": "Negative validation fixture that proves Builder preview denies mutating capabilities.",
+  "author": "Modula",
+  "repository": "local://modula-module-standard/tests/unsafe-capability-denial",
+  "category": "test",
+  "tags": ["builder", "sandbox", "denial-fixture"],
+  "permissions": [
+    {
+      "id": "profile.read",
+      "label": "Read profile context",
+      "reason": "Baseline read permission for profile tab fixture."
+    }
+  ],
+  "capabilities": [
+    "profile.declarative_layout",
+    "marketplace.write",
+    "package.install",
+    "runtime.registry.write"
+  ],
+  "dependencies": [],
+  "compatibility": {
+    "modula": ">=8.9.0",
+    "runtime": "profile_tab.declarative_layout.v1"
+  },
+  "release": {
+    "channel": "denial-fixture",
+    "artifact_required": false,
+    "checksum_required": false
+  },
+  "preview": {
+    "mode": "dry_run_shell_surface",
+    "route": "/builder/preview?template_id=profile-tab-standard",
+    "requires_install": false,
+    "mutates_runtime": false,
+    "shell_controls": "host_shell_top_controls",
+    "width_modes": ["centered", "full"],
+    "theme_surface": "modula_tokens_and_surface_inheritance",
+    "marketplace": "manifest_metadata",
+    "settings": "profile_tab_settings_metadata",
+    "status": "denial_fixture"
+  }
+}

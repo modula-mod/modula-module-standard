@@ -1,0 +1,9 @@
+{
+  "name": "@modula/unsafe-capability-denial-fixture",
+  "version": "0.0.0-denial",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate-package.mjs"
+  }
+}

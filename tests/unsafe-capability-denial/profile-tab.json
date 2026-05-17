@@ -1,0 +1,67 @@
+{
+  "id": "unsafe-capability-denial.profile-tab",
+  "type": "profile_tab",
+  "version": "0.0.0-denial",
+  "runtime": {
+    "mode": "declarative_layout"
+  },
+  "profile_surface": {
+    "id": "unsafe-capability-denial",
+    "title": "Unsafe Capability Denial",
+    "placement": "profile.tabs",
+    "route_mode": "host_profile_tab",
+    "profile_scoped": true
+  },
+  "surfaces": [
+    {
+      "id": "unsafe-capability-denial.profile-tab",
+      "type": "profile_tab",
+      "target": "profile_tab",
+      "route": "/profile?tab=unsafe-capability-denial"
+    }
+  ],
+  "layout": {
+    "schema": "modula.profile_tab.layout.v1",
+    "root": {
+      "type": "timeline",
+      "aria_label": "Unsafe capability denial fixture",
+      "empty_state": "This package must never be installed or published."
+    }
+  },
+  "permissions": [
+    {
+      "id": "profile.read",
+      "required": true
+    }
+  ],
+  "capabilities": [
+    "profile.declarative_layout",
+    "marketplace.write",
+    "package.install",
+    "runtime.registry.write"
+  ],
+  "preview": {
+    "mode": "dry_run_shell_surface",
+    "route": "/builder/preview?template_id=profile-tab-standard",
+    "requires_install": false,
+    "mutates_runtime": false,
+    "shell_controls": "host_shell_top_controls",
+    "width_modes": ["centered", "full"],
+    "theme_surface": "modula_tokens_and_surface_inheritance",
+    "marketplace": "manifest_metadata",
+    "settings": "profile_tab_settings_metadata",
+    "status": "denial_fixture"
+  },
+  "lifecycle": {
+    "mode": "host_managed_declarative_profile_tab",
+    "cleanup": "host_removes_profile_tab_binding",
+    "style_unload": "host_managed",
+    "diagnostics": "supported",
+    "global_side_effects": "none"
+  },
+  "settings": {
+    "section": "profile.tabs",
+    "enabled_by_default": false,
+    "user_toggle_allowed": false
+  }
+}

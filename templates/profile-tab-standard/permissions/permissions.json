@@ -1,0 +1,11 @@
+{
+  "permissions": [
+    {
+      "id": "profile.read",
+      "label": "Read profile context",
+      "required": true,
+      "reason": "Render declarative profile-owned tab content."
+    }
+  ],
+  "capabilities": ["profile.declarative_layout"]
+}

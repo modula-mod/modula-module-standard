@@ -1,0 +1,11 @@
+{
+  "permissions": [
+    {
+      "id": "profile.read",
+      "label": "Read profile context",
+      "required": true,
+      "reason": "Render host-provided profile statistics."
+    }
+  ],
+  "capabilities": ["widget.render"]
+}

@@ -1,0 +1,74 @@
+{
+  "id": "widget-standard.stats-card",
+  "type": "widget",
+  "version": "0.1.0",
+  "runtime": {
+    "mode": "declarative_widget"
+  },
+  "renderer": {
+    "schema": "modula.widget.renderer.v1",
+    "kind": "stats_card",
+    "root_class": "modula-widget-standard-stats-card-root"
+  },
+  "data_source": {
+    "mode": "host_provided",
+    "binding": "profile.stats",
+    "required": false,
+    "fallback": {
+      "label": "Profile views",
+      "value": "0",
+      "trend": "No data yet"
+    }
+  },
+  "surfaces": [
+    {
+      "id": "widget-standard.stats-card.profile",
+      "type": "profile",
+      "target": "profile",
+      "placement": "profile.widgets"
+    },
+    {
+      "id": "widget-standard.stats-card.board",
+      "type": "board",
+      "target": "board",
+      "placement": "board.widgets"
+    }
+  ],
+  "permissions": [
+    {
+      "id": "profile.read",
+      "required": true
+    }
+  ],
+  "capabilities": ["widget.render"],
+  "preview": {
+    "mode": "dry_run_shell_surface",
+    "route": null,
+    "requires_install": false,
+    "mutates_runtime": false,
+    "shell_controls": "host_shell_top_controls",
+    "width_modes": ["centered", "full"],
+    "theme_surface": "modula_tokens_and_surface_inheritance",
+    "marketplace": "manifest_metadata",
+    "settings": "widget_settings_metadata",
+    "status": "structural_only",
+    "skipped_reason": "no runtime preview route implemented yet"
+  },
+  "lifecycle": {
+    "mode": "host_managed_declarative_widget",
+    "cleanup": "host_removes_widget_binding",
+    "style_unload": "host_managed",
+    "diagnostics": "supported",
+    "global_side_effects": "none"
+  },
+  "settings": {
+    "section": "widgets",
+    "enabled_by_default": false,
+    "user_toggle_allowed": true
+  },
+  "theme": {
+    "surface_inheritance": true,
+    "tokens_only": true,
+    "css_scope": ".modula-native-module-root .modula-widget-standard-stats-card-root"
+  }
+}

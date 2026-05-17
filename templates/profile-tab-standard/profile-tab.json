@@ -1,0 +1,75 @@
+{
+  "id": "profile-tab-standard.timeline",
+  "type": "profile_tab",
+  "version": "0.1.0",
+  "runtime": {
+    "mode": "declarative_layout"
+  },
+  "profile_surface": {
+    "id": "timeline",
+    "title": "Timeline",
+    "placement": "profile.tabs",
+    "route_mode": "host_profile_tab",
+    "profile_scoped": true
+  },
+  "surfaces": [
+    {
+      "id": "profile-tab-standard.timeline",
+      "type": "profile_tab",
+      "target": "profile_tab",
+      "route": "/profile?tab=timeline"
+    }
+  ],
+  "layout": {
+    "schema": "modula.profile_tab.layout.v1",
+    "root": {
+      "type": "timeline",
+      "aria_label": "Profile timeline",
+      "empty_state": "Timeline entries will appear here when connected to a profile data source."
+    },
+    "data_bindings": [
+      {
+        "id": "profile.timeline",
+        "source": "host.profile.timeline",
+        "required": false
+      }
+    ]
+  },
+  "permissions": [
+    {
+      "id": "profile.read",
+      "required": true
+    }
+  ],
+  "capabilities": ["profile.declarative_layout"],
+  "preview": {
+    "mode": "dry_run_shell_surface",
+    "route": null,
+    "requires_install": false,
+    "mutates_runtime": false,
+    "shell_controls": "host_shell_top_controls",
+    "width_modes": ["centered", "full"],
+    "theme_surface": "modula_tokens_and_surface_inheritance",
+    "marketplace": "manifest_metadata",
+    "settings": "profile_tab_settings_metadata",
+    "status": "structural_only",
+    "skipped_reason": "no runtime preview route implemented yet"
+  },
+  "lifecycle": {
+    "mode": "host_managed_declarative_profile_tab",
+    "cleanup": "host_removes_profile_tab_binding",
+    "style_unload": "host_managed",
+    "diagnostics": "supported",
+    "global_side_effects": "none"
+  },
+  "settings": {
+    "section": "profile.tabs",
+    "enabled_by_default": false,
+    "user_toggle_allowed": true
+  },
+  "theme": {
+    "surface_inheritance": true,
+    "tokens_only": true,
+    "css_scope": ".modula-native-module-root .modula-profile-tab-standard-timeline-root"
+  }
+}

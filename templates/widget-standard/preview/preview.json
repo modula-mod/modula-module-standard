@@ -1,0 +1,15 @@
+{
+  "status": "structural_only",
+  "route": null,
+  "requires_install": false,
+  "mutates_runtime": false,
+  "skipped_reason": "no runtime preview route implemented yet",
+  "checks": [
+    "manifest metadata",
+    "widget renderer declaration",
+    "data source declaration",
+    "lifecycle declaration",
+    "theme surface inheritance",
+    "scoped css"
+  ]
+}

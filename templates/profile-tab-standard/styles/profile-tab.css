@@ -1,0 +1,8 @@
+.modula-native-module-root .modula-profile-tab-standard-timeline-root {
+  color: var(--text-primary);
+}
+
+.modula-native-module-root .modula-profile-tab-standard-timeline-root .timeline-list {
+  display: grid;
+  gap: var(--modula-space-3, 0.75rem);
+}

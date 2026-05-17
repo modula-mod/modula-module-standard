@@ -1,0 +1,7 @@
+{
+  "mode": "host_managed_declarative_widget",
+  "cleanup": "host_removes_widget_binding",
+  "style_unload": "host_managed",
+  "diagnostics": "supported",
+  "global_side_effects": "none"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@modula/profile-tab-standard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate-package.mjs"
+  }
+}

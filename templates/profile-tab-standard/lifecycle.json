@@ -1,0 +1,7 @@
+{
+  "mode": "host_managed_declarative_profile_tab",
+  "cleanup": "host_removes_profile_tab_binding",
+  "style_unload": "host_managed",
+  "diagnostics": "supported",
+  "global_side_effects": "none"
+}

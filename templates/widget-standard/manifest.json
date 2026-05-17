@@ -1,0 +1,44 @@
+{
+  "id": "widget-standard.stats-card",
+  "slug": "stats-card",
+  "title": "Stats Card Widget",
+  "name": "Stats Card Widget",
+  "version": "0.1.0",
+  "type": "widget",
+  "description": "Declarative widget package-root template for a compact stats card.",
+  "author": "Modula",
+  "repository": "local://modula-module-standard/templates/widget-standard",
+  "category": "widgets",
+  "tags": ["widget", "profile", "board", "declarative", "template"],
+  "permissions": [
+    {
+      "id": "profile.read",
+      "label": "Read profile context",
+      "reason": "Render host-provided profile statistics."
+    }
+  ],
+  "capabilities": ["widget.render"],
+  "dependencies": [],
+  "compatibility": {
+    "modula": ">=8.7.0",
+    "runtime": "widget.declarative_widget.v1"
+  },
+  "release": {
+    "channel": "template",
+    "artifact_required": false,
+    "checksum_required": false
+  },
+  "preview": {
+    "mode": "dry_run_shell_surface",
+    "route": null,
+    "requires_install": false,
+    "mutates_runtime": false,
+    "shell_controls": "host_shell_top_controls",
+    "width_modes": ["centered", "full"],
+    "theme_surface": "modula_tokens_and_surface_inheritance",
+    "marketplace": "manifest_metadata",
+    "settings": "widget_settings_metadata",
+    "status": "structural_only",
+    "skipped_reason": "no runtime preview route implemented yet"
+  }
+}

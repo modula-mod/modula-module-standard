@@ -1,0 +1,44 @@
+{
+  "id": "profile-tab-standard.timeline",
+  "slug": "timeline",
+  "title": "Timeline Profile Tab",
+  "name": "Timeline Profile Tab",
+  "version": "0.1.0",
+  "type": "profile_tab",
+  "description": "Declarative profile tab package-root template for a simple timeline surface.",
+  "author": "Modula",
+  "repository": "local://modula-module-standard/templates/profile-tab-standard",
+  "category": "profile",
+  "tags": ["profile", "tab", "declarative", "template"],
+  "permissions": [
+    {
+      "id": "profile.read",
+      "label": "Read profile context",
+      "reason": "Render profile-owned timeline data through the host surface."
+    }
+  ],
+  "capabilities": ["profile.declarative_layout"],
+  "dependencies": [],
+  "compatibility": {
+    "modula": ">=8.7.0",
+    "runtime": "profile_tab.declarative_layout.v1"
+  },
+  "release": {
+    "channel": "template",
+    "artifact_required": false,
+    "checksum_required": false
+  },
+  "preview": {
+    "mode": "dry_run_shell_surface",
+    "route": null,
+    "requires_install": false,
+    "mutates_runtime": false,
+    "shell_controls": "host_shell_top_controls",
+    "width_modes": ["centered", "full"],
+    "theme_surface": "modula_tokens_and_surface_inheritance",
+    "marketplace": "manifest_metadata",
+    "settings": "profile_tab_settings_metadata",
+    "status": "structural_only",
+    "skipped_reason": "no runtime preview route implemented yet"
+  }
+}

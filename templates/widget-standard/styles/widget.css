@@ -1,0 +1,7 @@
+.modula-native-module-root .modula-widget-standard-stats-card-root {
+  color: var(--text-primary);
+}
+
+.modula-native-module-root .modula-widget-standard-stats-card-root .stats-card-value {
+  font-variant-numeric: tabular-nums;
+}

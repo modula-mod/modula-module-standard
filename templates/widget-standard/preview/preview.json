@@ -1,9 +1,8 @@
 {
-  "status": "structural_only",
-  "route": null,
+  "status": "runtime_preview_available",
+  "route": "/builder/preview?template_id=widget-standard",
   "requires_install": false,
   "mutates_runtime": false,
-  "skipped_reason": "no runtime preview route implemented yet",
   "checks": [
     "manifest metadata",
     "widget renderer declaration",

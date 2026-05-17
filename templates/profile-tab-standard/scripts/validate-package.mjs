@@ -33,8 +33,11 @@ if (manifest.id !== profileTab.id || manifest.version !== profileTab.version) {
 if (!profileTab.profile_surface || !profileTab.layout || !profileTab.preview || !profileTab.lifecycle) {
   throw new Error('profile-tab.json must declare profile_surface, layout, preview, and lifecycle.');
 }
-if (profileTab.preview.route !== null) {
-  throw new Error('Profile tab template preview route must remain null until runtime preview is implemented.');
+if (profileTab.preview.route !== '/builder/preview?template_id=profile-tab-standard') {
+  throw new Error('Profile tab template preview route must use the approved non-mutating runtime preview route.');
+}
+if (profileTab.preview.requires_install !== false || profileTab.preview.mutates_runtime !== false) {
+  throw new Error('Profile tab preview must not require install or mutate runtime.');
 }
 
 console.log(JSON.stringify({ ok: true, package_type: 'profile_tab', package_id: manifest.id }, null, 2));

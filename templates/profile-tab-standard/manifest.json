@@ -30,7 +30,7 @@
   },
   "preview": {
     "mode": "dry_run_shell_surface",
-    "route": null,
+    "route": "/builder/preview?template_id=profile-tab-standard",
     "requires_install": false,
     "mutates_runtime": false,
     "shell_controls": "host_shell_top_controls",
@@ -38,7 +38,6 @@
     "theme_surface": "modula_tokens_and_surface_inheritance",
     "marketplace": "manifest_metadata",
     "settings": "profile_tab_settings_metadata",
-    "status": "structural_only",
-    "skipped_reason": "no runtime preview route implemented yet"
+    "status": "runtime_preview_available"
   }
 }

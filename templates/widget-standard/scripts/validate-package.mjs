@@ -33,8 +33,11 @@ if (manifest.id !== widget.id || manifest.version !== widget.version) {
 if (!widget.renderer || !widget.data_source || !widget.preview || !widget.lifecycle) {
   throw new Error('widget.json must declare renderer, data_source, preview, and lifecycle.');
 }
-if (widget.preview.route !== null) {
-  throw new Error('Widget template preview route must remain null until runtime preview is implemented.');
+if (widget.preview.route !== '/builder/preview?template_id=widget-standard') {
+  throw new Error('Widget template preview route must use the approved non-mutating runtime preview route.');
+}
+if (widget.preview.requires_install !== false || widget.preview.mutates_runtime !== false) {
+  throw new Error('Widget preview must not require install or mutate runtime.');
 }
 
 console.log(JSON.stringify({ ok: true, package_type: 'widget', package_id: manifest.id }, null, 2));

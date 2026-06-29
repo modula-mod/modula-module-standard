@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://modula.digital/schemas/mms/0.1.0/module.permissions.schema.json",
+  "title": "Modula Module Permissions",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["storage", "network", "media", "notifications", "ai"],
+  "properties": {
+    "storage": {"type": "boolean"},
+    "network": {"type": "boolean"},
+    "media": {"type": "boolean"},
+    "notifications": {"type": "boolean"},
+    "ai": {"type": "boolean"}
+  }
+}
+

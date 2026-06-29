@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://modula.digital/schemas/mms/0.1.0/module.ui.schema.json",
+  "title": "Modula Module UI Compatibility",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "usesDesignStandard",
+    "supportsSurfaceTypes",
+    "supportsTextScale",
+    "supportsReduceMotion"
+  ],
+  "properties": {
+    "usesDesignStandard": {"type": "boolean"},
+    "supportsSurfaceTypes": {"type": "boolean"},
+    "supportsTextScale": {"type": "boolean"},
+    "supportsReduceMotion": {"type": "boolean"}
+  }
+}
+

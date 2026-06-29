@@ -1,0 +1,50 @@
+{
+  "mmsVersion": "0.1.0",
+  "id": "vault-notes",
+  "name": "Vault Notes",
+  "version": "0.1.0",
+  "status": "local",
+  "category": "productivity",
+  "description": "Private notes for your Modula space.",
+  "entry": {
+    "route": "/module/vault-notes",
+    "component": "VaultNotesModule"
+  },
+  "ownerTypes": ["user", "team", "business"],
+  "permissions": {
+    "storage": true,
+    "network": false,
+    "media": false,
+    "notifications": false,
+    "ai": false
+  },
+  "surfaces": {
+    "board": true,
+    "profile": true,
+    "settings": true
+  },
+  "data": {
+    "provider": "modula-core",
+    "storage": "json-file",
+    "sync": "planned"
+  },
+  "ui": {
+    "usesDesignStandard": true,
+    "supportsSurfaceTypes": true,
+    "supportsTextScale": true,
+    "supportsReduceMotion": true
+  },
+  "minimumModulaVersion": "0.1.0",
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-06-29",
+      "notes": "Initial local module manifest."
+    }
+  ],
+  "integrity": {
+    "hash": null,
+    "signature": null
+  }
+}
+

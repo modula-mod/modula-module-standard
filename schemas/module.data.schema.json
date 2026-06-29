@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://modula.digital/schemas/mms/0.1.0/module.data.schema.json",
+  "title": "Modula Module Data",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["provider", "storage", "sync"],
+  "properties": {
+    "provider": {"type": "string", "minLength": 1},
+    "storage": {"type": "string", "minLength": 1},
+    "sync": {"type": "string", "minLength": 1}
+  }
+}
+

@@ -1,15 +1,24 @@
 {
-  "mmsVersion": "0.1.2",
+  "mmsVersion": "0.1.3",
   "id": "tasks",
   "name": "Tasks",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "status": "available",
   "category": "productivity",
+  "categories": ["productivity", "planning", "tasks"],
   "description": "Simple tasks for your Modula space.",
+  "screenshots": [
+    {
+      "title": "Task planning board card",
+      "path": "docs/previews/board-card.md",
+      "description": "Host-rendered Board summary for open tasks.",
+      "surface": "board"
+    }
+  ],
   "source": {
     "type": "github",
     "repo": "modula-mod/modula-module-tasks",
-    "ref": "tasks-v0.1.1",
+    "ref": "tasks-v0.1.2",
     "path": "modula.module.json"
   },
   "entry": {
@@ -34,13 +43,28 @@
   "lifecycle": {
     "install": "manual",
     "update": "manual",
-    "uninstall": "preserve-data"
+    "uninstall": "preserve-data",
+    "installable": true,
+    "updateable": true,
+    "rollbackable": true
   },
   "compatibility": {
-    "minimumModulaVersion": "0.1.0"
+    "minimumModulaVersion": "0.1.0",
+    "minModulaVersion": "0.1.0",
+    "minHostVersion": "0.1.0",
+    "hostRendered": true
   },
   "minimumModulaVersion": "0.1.0",
+  "changelogSource": {
+    "type": "github",
+    "path": "CHANGELOG.md"
+  },
   "changelog": [
+    {
+      "version": "0.1.2",
+      "date": "2026-06-30",
+      "notes": "Adds Module Store metadata, categories, preview descriptors, compatibility fields, changelog source, and rollback lifecycle capability."
+    },
     {
       "version": "0.1.1",
       "date": "2026-06-30",

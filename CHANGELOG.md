@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.3
+
+- Added optional Module Store metadata fields for categories and screenshots.
+- Added lifecycle capability flags for install, update, and rollback support.
+- Added compatibility fields for minimum Modula/host versions and host-rendered modules.
+- Added `changelogSource` for GitHub-backed changelog files while preserving inline version history.
+- Updated registry examples for Vault Notes and Tasks `0.1.2`.
+
 ## 0.1.2
 
 - Added GitHub source repo/ref/path fields.

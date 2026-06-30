@@ -2,7 +2,7 @@
 
 MMS, the Modula Module Standard, defines how modules identify themselves, declare permissions, expose UI surfaces, and participate in the Modula registry/version flow.
 
-Current version: `0.1.2`.
+Current version: `0.1.3`.
 
 This repository is private while the standard is still stabilizing.
 

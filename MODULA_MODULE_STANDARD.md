@@ -1,6 +1,6 @@
 # MMS - Modula Module Standard
 
-`mms.version = "0.1.2"`
+`mms.version = "0.1.3"`
 
 MMS defines how a Modula module declares identity, permissions, compatible UI surfaces, data ownership, versioning, and registry behavior.
 
@@ -8,17 +8,26 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
 
 ```json
 {
-  "mmsVersion": "0.1.2",
+  "mmsVersion": "0.1.3",
   "id": "vault-notes",
   "name": "Vault Notes",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "status": "available",
   "category": "productivity",
+  "categories": ["productivity", "private", "notes"],
   "description": "Private notes for your Modula space.",
+  "screenshots": [
+    {
+      "title": "Private notes board card",
+      "path": "docs/previews/board-card.md",
+      "description": "Host-rendered Board summary for private notes.",
+      "surface": "board"
+    }
+  ],
   "source": {
     "type": "github",
     "repo": "modula-mod/modula-module-vault-notes",
-    "ref": "vault-notes-v0.1.1",
+    "ref": "vault-notes-v0.1.2",
     "path": "modula.module.json"
   },
   "entry": {
@@ -43,17 +52,27 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
   "lifecycle": {
     "install": "manual",
     "update": "manual",
-    "uninstall": "preserve-data"
+    "uninstall": "preserve-data",
+    "installable": true,
+    "updateable": true,
+    "rollbackable": true
   },
   "compatibility": {
-    "minimumModulaVersion": "0.1.0"
+    "minimumModulaVersion": "0.1.0",
+    "minModulaVersion": "0.1.0",
+    "minHostVersion": "0.1.0",
+    "hostRendered": true
   },
   "minimumModulaVersion": "0.1.0",
+  "changelogSource": {
+    "type": "github",
+    "path": "CHANGELOG.md"
+  },
   "changelog": [
     {
-      "version": "0.1.1",
+      "version": "0.1.2",
       "date": "2026-06-30",
-      "notes": "Adds GitHub source and install runtime contract."
+      "notes": "Adds Module Store metadata and lifecycle capability flags."
     }
   ],
   "integrity": {
@@ -71,7 +90,9 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
 - `version`: semver module version.
 - `status`: current module availability state.
 - `category`: product category.
+- `categories`: optional category tags for store/library browsing.
 - `description`: concise purpose statement.
+- `screenshots`: optional preview descriptors for store/detail surfaces.
 - `source`: GitHub repo/ref/path for the source package manifest.
 - `entry`: host-rendered or package-rendered runtime entry metadata.
 - `ownerTypes`: allowed owners.
@@ -83,6 +104,7 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
 - `lifecycle`: install, update, and uninstall behavior.
 - `compatibility`: Modula runtime compatibility metadata.
 - `minimumModulaVersion`: minimum compatible Modula app version.
+- `changelogSource`: optional file-backed changelog source.
 - `changelog`: auditable version notes.
 - `integrity`: reserved hash/signature fields.
 

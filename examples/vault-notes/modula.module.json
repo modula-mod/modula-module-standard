@@ -1,28 +1,25 @@
 {
-  "mmsVersion": "0.1.0",
+  "mmsVersion": "0.1.2",
   "id": "vault-notes",
   "name": "Vault Notes",
-  "version": "0.1.0",
-  "status": "local",
+  "version": "0.1.1",
+  "status": "available",
   "category": "productivity",
   "description": "Private notes for your Modula space.",
+  "source": {
+    "type": "github",
+    "repo": "modula-mod/modula-module-vault-notes",
+    "ref": "vault-notes-v0.1.1",
+    "path": "modula.module.json"
+  },
   "entry": {
-    "route": "/module/vault-notes",
-    "component": "VaultNotesModule"
+    "type": "host-rendered",
+    "route": "/module/vault-notes"
   },
   "ownerTypes": ["user", "team", "business"],
-  "permissions": {
-    "storage": true,
-    "network": false,
-    "media": false,
-    "notifications": false,
-    "ai": false
-  },
-  "surfaces": {
-    "board": true,
-    "profile": true,
-    "settings": true
-  },
+  "permissions": [],
+  "surfaces": ["board", "profile", "settings"],
+  "capabilities": [],
   "data": {
     "provider": "modula-core",
     "storage": "json-file",
@@ -34,12 +31,25 @@
     "supportsTextScale": true,
     "supportsReduceMotion": true
   },
+  "lifecycle": {
+    "install": "manual",
+    "update": "manual",
+    "uninstall": "preserve-data"
+  },
+  "compatibility": {
+    "minimumModulaVersion": "0.1.0"
+  },
   "minimumModulaVersion": "0.1.0",
   "changelog": [
     {
+      "version": "0.1.1",
+      "date": "2026-06-30",
+      "notes": "Adds GitHub source, host-rendered entry type, install lifecycle, surfaces, permissions, and capabilities contract."
+    },
+    {
       "version": "0.1.0",
       "date": "2026-06-29",
-      "notes": "Initial local module manifest."
+      "notes": "Initial GitHub-native core module manifest."
     }
   ],
   "integrity": {
@@ -47,4 +57,3 @@
     "signature": null
   }
 }
-

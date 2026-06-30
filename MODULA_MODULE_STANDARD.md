@@ -1,6 +1,6 @@
 # MMS - Modula Module Standard
 
-`mms.version = "0.1.0"`
+`mms.version = "0.1.2"`
 
 MMS defines how a Modula module declares identity, permissions, compatible UI surfaces, data ownership, versioning, and registry behavior.
 
@@ -8,30 +8,27 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
 
 ```json
 {
-  "mmsVersion": "0.1.0",
+  "mmsVersion": "0.1.2",
   "id": "vault-notes",
   "name": "Vault Notes",
-  "version": "0.1.0",
-  "status": "local",
+  "version": "0.1.1",
+  "status": "available",
   "category": "productivity",
   "description": "Private notes for your Modula space.",
+  "source": {
+    "type": "github",
+    "repo": "modula-mod/modula-module-vault-notes",
+    "ref": "vault-notes-v0.1.1",
+    "path": "modula.module.json"
+  },
   "entry": {
-    "route": "/module/vault-notes",
-    "component": "VaultNotesModule"
+    "type": "host-rendered",
+    "route": "/module/vault-notes"
   },
   "ownerTypes": ["user", "team", "business"],
-  "permissions": {
-    "storage": true,
-    "network": false,
-    "media": false,
-    "notifications": false,
-    "ai": false
-  },
-  "surfaces": {
-    "board": true,
-    "profile": true,
-    "settings": true
-  },
+  "permissions": [],
+  "surfaces": ["board", "profile", "settings"],
+  "capabilities": [],
   "data": {
     "provider": "modula-core",
     "storage": "json-file",
@@ -43,12 +40,20 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
     "supportsTextScale": true,
     "supportsReduceMotion": true
   },
+  "lifecycle": {
+    "install": "manual",
+    "update": "manual",
+    "uninstall": "preserve-data"
+  },
+  "compatibility": {
+    "minimumModulaVersion": "0.1.0"
+  },
   "minimumModulaVersion": "0.1.0",
   "changelog": [
     {
-      "version": "0.1.0",
-      "date": "2026-06-29",
-      "notes": "Initial local module manifest."
+      "version": "0.1.1",
+      "date": "2026-06-30",
+      "notes": "Adds GitHub source and install runtime contract."
     }
   ],
   "integrity": {
@@ -67,12 +72,16 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
 - `status`: current module availability state.
 - `category`: product category.
 - `description`: concise purpose statement.
-- `entry`: route/component entry metadata.
+- `source`: GitHub repo/ref/path for the source package manifest.
+- `entry`: host-rendered or package-rendered runtime entry metadata.
 - `ownerTypes`: allowed owners.
 - `permissions`: capability declaration.
 - `surfaces`: surfaces where the module may appear.
+- `capabilities`: named runtime capabilities exposed by the module.
 - `data`: provider/storage/sync declaration.
 - `ui`: compatibility with the Modula design/runtime settings.
+- `lifecycle`: install, update, and uninstall behavior.
+- `compatibility`: Modula runtime compatibility metadata.
 - `minimumModulaVersion`: minimum compatible Modula app version.
 - `changelog`: auditable version notes.
 - `integrity`: reserved hash/signature fields.
@@ -94,14 +103,14 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
 - Module version: manifest `version`, semver.
 - Modula app version: `minimumModulaVersion`, semver compatibility gate.
 
-## Future Fetch Flow
+## Phase 18B Fetch Flow
 
-1. App fetches registry.
-2. App/backend validates manifest.
-3. App compares module version, registry version, and standard version.
-4. App installs or updates module through a trusted provider.
-5. Module appears on Board/Profile/Settings according to manifest surfaces.
-6. Rollback is possible by selecting a previous module version.
+1. Modula Core fetches the registry and GitHub module manifests.
+2. Modula Core validates and caches manifests server-side.
+3. Frontend asks Modula Core for registry and installed runtime state.
+4. Installs and updates go through Modula Core, not local UI state.
+5. Module appears on Board/Profile/Settings according to installed state and manifest surfaces.
+6. Future package-rendered runtimes may load remote UI bundles after trust/integrity controls are ready.
 
 ## Rules
 
@@ -111,4 +120,3 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
 - Frontend clients must skip invalid manifests with a warning instead of crashing.
 - Private registry fetching must be mediated by backend endpoints, not frontend tokens.
 - Integrity hashes and signatures are reserved for a later standard revision.
-

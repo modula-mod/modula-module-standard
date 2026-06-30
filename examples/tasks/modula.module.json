@@ -1,28 +1,25 @@
 {
-  "mmsVersion": "0.1.0",
+  "mmsVersion": "0.1.2",
   "id": "tasks",
   "name": "Tasks",
-  "version": "0.1.0",
-  "status": "local",
+  "version": "0.1.1",
+  "status": "available",
   "category": "productivity",
-  "description": "Simple task lists for your Modula space.",
+  "description": "Simple tasks for your Modula space.",
+  "source": {
+    "type": "github",
+    "repo": "modula-mod/modula-module-tasks",
+    "ref": "tasks-v0.1.1",
+    "path": "modula.module.json"
+  },
   "entry": {
-    "route": "/module/tasks",
-    "component": "TasksModule"
+    "type": "host-rendered",
+    "route": "/module/tasks"
   },
   "ownerTypes": ["user", "team", "business"],
-  "permissions": {
-    "storage": true,
-    "network": false,
-    "media": false,
-    "notifications": false,
-    "ai": false
-  },
-  "surfaces": {
-    "board": true,
-    "profile": true,
-    "settings": true
-  },
+  "permissions": [],
+  "surfaces": ["board", "profile", "settings"],
+  "capabilities": [],
   "data": {
     "provider": "modula-core",
     "storage": "json-file",
@@ -34,12 +31,25 @@
     "supportsTextScale": true,
     "supportsReduceMotion": true
   },
+  "lifecycle": {
+    "install": "manual",
+    "update": "manual",
+    "uninstall": "preserve-data"
+  },
+  "compatibility": {
+    "minimumModulaVersion": "0.1.0"
+  },
   "minimumModulaVersion": "0.1.0",
   "changelog": [
     {
+      "version": "0.1.1",
+      "date": "2026-06-30",
+      "notes": "Adds GitHub source, host-rendered entry type, install lifecycle, surfaces, permissions, and capabilities contract."
+    },
+    {
       "version": "0.1.0",
       "date": "2026-06-29",
-      "notes": "Initial local module manifest."
+      "notes": "Initial GitHub-native core module manifest."
     }
   ],
   "integrity": {
@@ -47,4 +57,3 @@
     "signature": null
   }
 }
-

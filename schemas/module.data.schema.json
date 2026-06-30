@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://modula.digital/schemas/mms/0.1.0/module.data.schema.json",
+  "$id": "https://modula.digital/schemas/mms/0.1.2/module.data.schema.json",
   "title": "Modula Module Data",
   "type": "object",
   "additionalProperties": false,
@@ -11,4 +11,3 @@
     "sync": {"type": "string", "minLength": 1}
   }
 }
-

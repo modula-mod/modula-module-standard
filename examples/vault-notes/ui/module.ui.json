@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "0.2.0",
+  "moduleId": "vault-notes",
+  "entry": "screens.index",
+  "theme": {
+    "preferredSurface": "solid",
+    "accentRole": "privacy"
+  },
+  "screens": {
+    "index": {
+      "title": "Vault Notes",
+      "layout": "module-list-detail",
+      "sections": [
+        {
+          "type": "hero",
+          "title": "Private notes",
+          "subtitle": "Capture ideas inside your Modula space.",
+          "actions": ["createNote"]
+        },
+        {
+          "type": "search",
+          "resource": "notes",
+          "placeholder": "Search notes"
+        },
+        {
+          "type": "resourceList",
+          "resource": "notes",
+          "emptyState": {
+            "title": "No notes yet",
+            "description": "Create your first private note.",
+            "action": "createNote"
+          }
+        }
+      ]
+    }
+  },
+  "actions": {
+    "createNote": {
+      "label": "New note",
+      "kind": "create",
+      "resource": "notes",
+      "defaultPayload": {"title": "Untitled note", "body": ""}
+    }
+  },
+  "resources": {
+    "notes": {
+      "type": "collection",
+      "endpoint": "/api/modula/vault-notes",
+      "responseKey": "notes",
+      "itemResponseKey": "note",
+      "idField": "id",
+      "titleField": "title",
+      "descriptionField": "body",
+      "searchFields": ["title", "body"],
+      "methods": {
+        "list": "GET",
+        "create": "POST",
+        "update": "PATCH",
+        "delete": "DELETE"
+      }
+    }
+  }
+}

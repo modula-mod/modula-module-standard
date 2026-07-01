@@ -27,9 +27,16 @@ export type ModulaModuleDataConfig = {
   provider: string
   storage: string
   sync: string
+  contract?: {
+    schemaVersion: string
+    entry: string
+  }
 }
 
 export type ModulaModuleUiConfig = {
+  type?: 'host-rendered' | 'modula-ui-contract' | 'package-rendered'
+  schemaVersion?: string
+  entry?: string
   usesDesignStandard: boolean
   supportsSurfaceTypes: boolean
   supportsTextScale: boolean
@@ -62,7 +69,7 @@ export type ModulaModuleChangelogSource = {
 }
 
 export type ModulaModuleManifest = {
-  mmsVersion: '0.1.3'
+  mmsVersion: '0.2.0'
   id: string
   name: string
   version: string
@@ -73,7 +80,7 @@ export type ModulaModuleManifest = {
   screenshots?: ModulaModuleScreenshot[]
   source: ModulaModuleSource
   entry: {
-    type: 'host-rendered' | 'package-rendered'
+    type: 'host-rendered' | 'modula-ui-contract' | 'package-rendered'
     route: string
     component?: string
   }
@@ -107,7 +114,7 @@ export type ModulaModuleManifest = {
 }
 
 export type ModulaModuleRegistry = {
-  mmsVersion: '0.1.3'
+  mmsVersion: '0.2.0'
   registryVersion: string
   source: string
   modules: ModulaModuleManifest[]

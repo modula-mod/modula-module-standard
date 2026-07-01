@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://modula.digital/schemas/mms/0.1.3/module.manifest.schema.json",
+  "$id": "https://modula.digital/schemas/mms/0.2.0/module.manifest.schema.json",
   "title": "Modula Module Manifest",
   "type": "object",
   "additionalProperties": false,
@@ -27,7 +27,7 @@
     "integrity"
   ],
   "properties": {
-    "mmsVersion": {"const": "0.1.3"},
+    "mmsVersion": {"const": "0.2.0"},
     "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
     "name": {"type": "string", "minLength": 1},
     "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"},
@@ -72,7 +72,7 @@
       "additionalProperties": false,
       "required": ["type", "route"],
       "properties": {
-        "type": {"type": "string", "enum": ["host-rendered", "package-rendered"]},
+        "type": {"type": "string", "enum": ["host-rendered", "package-rendered", "modula-ui-contract"]},
         "route": {"type": "string", "minLength": 1},
         "component": {"type": "string", "minLength": 1}
       }
@@ -132,7 +132,25 @@
       }
     },
     "data": {"$ref": "module.data.schema.json"},
-    "ui": {"$ref": "module.ui.schema.json"},
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "usesDesignStandard",
+        "supportsSurfaceTypes",
+        "supportsTextScale",
+        "supportsReduceMotion"
+      ],
+      "properties": {
+        "type": {"type": "string", "enum": ["host-rendered", "modula-ui-contract", "package-rendered"]},
+        "schemaVersion": {"type": "string"},
+        "entry": {"type": "string", "minLength": 1},
+        "usesDesignStandard": {"type": "boolean"},
+        "supportsSurfaceTypes": {"type": "boolean"},
+        "supportsTextScale": {"type": "boolean"},
+        "supportsReduceMotion": {"type": "boolean"}
+      }
+    },
     "minimumModulaVersion": {"type": "string"},
     "changelog": {
       "type": "array",

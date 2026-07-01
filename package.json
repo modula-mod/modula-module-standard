@@ -1,6 +1,6 @@
 {
   "name": "modula-module-standard",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "validate": "node scripts/validate-module.mjs",

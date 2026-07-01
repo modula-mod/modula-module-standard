@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+- Added package-owned module UI runtime contracts.
+- Added module screen and action schemas.
+- Extended data and permissions schemas for runtime package files.
+- Updated Vault Notes and Tasks examples to point at v0.2.0 package-owned UI contracts.
+- Updated registry seed to v0.2.0 module package tags.
+
 ## 0.1.3
 
 - Added optional Module Store metadata fields for categories and screenshots.

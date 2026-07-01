@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://modula.digital/schemas/mms/0.2.0/module.actions.schema.json",
+  "title": "Modula Module Actions",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["label", "kind", "resource"],
+    "properties": {
+      "label": {"type": "string", "minLength": 1},
+      "kind": {
+        "type": "string",
+        "enum": ["create", "update", "delete", "toggle", "filter", "search", "open", "configure"]
+      },
+      "resource": {"type": "string", "minLength": 1},
+      "field": {"type": "string", "minLength": 1},
+      "defaultPayload": {"type": "object", "additionalProperties": true},
+      "patch": {"type": "object", "additionalProperties": true},
+      "requiresSelection": {"type": "boolean"}
+    }
+  }
+}

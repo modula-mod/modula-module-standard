@@ -1,49 +1,56 @@
 # MMS - Modula Module Standard
 
-`mms.version = "0.1.3"`
+`mms.version = "0.2.0"`
 
-MMS defines how a Modula module declares identity, permissions, compatible UI surfaces, data ownership, versioning, and registry behavior.
+MMS defines how a Modula module declares identity, permissions, compatible UI surfaces, package-owned UI contracts, data ownership, actions, versioning, and registry behavior.
 
 ## Module Manifest
 
 ```json
 {
-  "mmsVersion": "0.1.3",
+  "mmsVersion": "0.2.0",
   "id": "vault-notes",
   "name": "Vault Notes",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "status": "available",
   "category": "productivity",
   "categories": ["productivity", "private", "notes"],
   "description": "Private notes for your Modula space.",
   "screenshots": [
     {
-      "title": "Private notes board card",
-      "path": "docs/previews/board-card.md",
-      "description": "Host-rendered Board summary for private notes.",
-      "surface": "board"
+      "title": "Private notes runtime screen",
+      "path": "screenshots/mobile-preview.json",
+      "description": "Package-owned Vault Notes UI contract rendered by Modula.",
+      "surface": "route"
     }
   ],
   "source": {
     "type": "github",
     "repo": "modula-mod/modula-module-vault-notes",
-    "ref": "vault-notes-v0.1.2",
+    "ref": "vault-notes-v0.2.0",
     "path": "modula.module.json"
   },
   "entry": {
-    "type": "host-rendered",
+    "type": "modula-ui-contract",
     "route": "/module/vault-notes"
   },
   "ownerTypes": ["user", "team", "business"],
-  "permissions": [],
-  "surfaces": ["board", "profile", "settings"],
-  "capabilities": [],
+  "permissions": ["local-storage"],
+  "surfaces": ["board", "profile", "settings", "route", "marketplace"],
+  "capabilities": ["notes.create", "notes.update", "notes.delete", "notes.search"],
   "data": {
     "provider": "modula-core",
     "storage": "json-file",
-    "sync": "planned"
+    "sync": "planned",
+    "contract": {
+      "schemaVersion": "0.2.0",
+      "entry": "data/module.data.json"
+    }
   },
   "ui": {
+    "type": "modula-ui-contract",
+    "schemaVersion": "0.2.0",
+    "entry": "ui/module.ui.json",
     "usesDesignStandard": true,
     "supportsSurfaceTypes": true,
     "supportsTextScale": true,
@@ -58,21 +65,21 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
     "rollbackable": true
   },
   "compatibility": {
-    "minimumModulaVersion": "0.1.0",
-    "minModulaVersion": "0.1.0",
-    "minHostVersion": "0.1.0",
+    "minimumModulaVersion": "0.2.0",
+    "minModulaVersion": "0.2.0",
+    "minHostVersion": "0.2.0",
     "hostRendered": true
   },
-  "minimumModulaVersion": "0.1.0",
+  "minimumModulaVersion": "0.2.0",
   "changelogSource": {
     "type": "github",
     "path": "CHANGELOG.md"
   },
   "changelog": [
     {
-      "version": "0.1.2",
-      "date": "2026-06-30",
-      "notes": "Adds Module Store metadata and lifecycle capability flags."
+      "version": "0.2.0",
+      "date": "2026-07-01",
+      "notes": "Adds package-owned UI, screen, data, action, and permission contracts for the safe host-rendered module runtime."
     }
   ],
   "integrity": {
@@ -94,13 +101,13 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
 - `description`: concise purpose statement.
 - `screenshots`: optional preview descriptors for store/detail surfaces.
 - `source`: GitHub repo/ref/path for the source package manifest.
-- `entry`: host-rendered or package-rendered runtime entry metadata.
+- `entry`: host-rendered, package UI contract, or future package-rendered runtime entry metadata.
 - `ownerTypes`: allowed owners.
 - `permissions`: capability declaration.
 - `surfaces`: surfaces where the module may appear.
 - `capabilities`: named runtime capabilities exposed by the module.
-- `data`: provider/storage/sync declaration.
-- `ui`: compatibility with the Modula design/runtime settings.
+- `data`: provider/storage/sync declaration and optional data contract pointer.
+- `ui`: package UI contract pointer plus compatibility with Modula design/runtime settings.
 - `lifecycle`: install, update, and uninstall behavior.
 - `compatibility`: Modula runtime compatibility metadata.
 - `minimumModulaVersion`: minimum compatible Modula app version.
@@ -125,14 +132,16 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
 - Module version: manifest `version`, semver.
 - Modula app version: `minimumModulaVersion`, semver compatibility gate.
 
-## Phase 18B Fetch Flow
+## Phase 18D Runtime Flow
 
 1. Modula Core fetches the registry and GitHub module manifests.
-2. Modula Core validates and caches manifests server-side.
-3. Frontend asks Modula Core for registry and installed runtime state.
-4. Installs and updates go through Modula Core, not local UI state.
-5. Module appears on Board/Profile/Settings according to installed state and manifest surfaces.
-6. Future package-rendered runtimes may load remote UI bundles after trust/integrity controls are ready.
+2. The module manifest points to `ui/module.ui.json`, `data/module.data.json`, and `permissions/module.permissions.json`.
+3. Modula Core fetches, hydrates, and caches the package runtime server-side.
+4. Frontend asks Modula Core for registry, installed runtime state, and `/api/modula/modules/:moduleId/runtime`.
+5. The Modula host renders the package-owned UI contract through the safe Module Renderer.
+6. Module actions call approved backend endpoints declared in the resource contract.
+7. Host fallback screens may be used only when the runtime package fails.
+8. Future package-rendered runtimes may load reviewed/signed code only after trust/integrity controls are ready.
 
 ## Rules
 
@@ -141,4 +150,5 @@ MMS defines how a Modula module declares identity, permissions, compatible UI su
 - Module APIs should use `/api/modula/{module-id}/...`.
 - Frontend clients must skip invalid manifests with a warning instead of crashing.
 - Private registry fetching must be mediated by backend endpoints, not frontend tokens.
+- MMS 0.2.0 does not permit arbitrary remote JavaScript or React Native code execution.
 - Integrity hashes and signatures are reserved for a later standard revision.

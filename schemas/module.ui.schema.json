@@ -1,19 +1,79 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://modula.digital/schemas/mms/0.1.3/module.ui.schema.json",
-  "title": "Modula Module UI Compatibility",
+  "$id": "https://modula.digital/schemas/mms/0.2.0/module.ui.schema.json",
+  "title": "Modula Module UI Runtime Contract",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "usesDesignStandard",
-    "supportsSurfaceTypes",
-    "supportsTextScale",
-    "supportsReduceMotion"
-  ],
+  "required": ["schemaVersion", "moduleId", "entry", "screens", "actions", "resources"],
   "properties": {
-    "usesDesignStandard": {"type": "boolean"},
-    "supportsSurfaceTypes": {"type": "boolean"},
-    "supportsTextScale": {"type": "boolean"},
-    "supportsReduceMotion": {"type": "boolean"}
+    "schemaVersion": {"const": "0.2.0"},
+    "moduleId": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+    "entry": {"type": "string", "pattern": "^screens\\.[a-zA-Z0-9_-]+$"},
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preferredSurface": {"type": "string", "enum": ["solid", "glass", "frost", "neumorphism"]},
+        "accentRole": {"type": "string", "minLength": 1}
+      }
+    },
+    "screens": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {"$ref": "module.screen.schema.json"},
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["$ref"],
+            "properties": {
+              "$ref": {"type": "string", "minLength": 1}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path"],
+            "properties": {
+              "path": {"type": "string", "minLength": 1}
+            }
+          }
+        ]
+      }
+    },
+    "actions": {"$ref": "module.actions.schema.json"},
+    "resources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "endpoint"],
+        "properties": {
+          "type": {"type": "string", "enum": ["collection", "item"]},
+          "endpoint": {"type": "string", "minLength": 1},
+          "responseKey": {"type": "string", "minLength": 1},
+          "itemResponseKey": {"type": "string", "minLength": 1},
+          "idField": {"type": "string", "minLength": 1},
+          "titleField": {"type": "string", "minLength": 1},
+          "descriptionField": {"type": "string", "minLength": 1},
+          "statusField": {"type": "string", "minLength": 1},
+          "searchFields": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+          },
+          "methods": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "list": {"const": "GET"},
+              "create": {"const": "POST"},
+              "update": {"const": "PATCH"},
+              "delete": {"const": "DELETE"}
+            }
+          }
+        }
+      }
+    }
   }
 }

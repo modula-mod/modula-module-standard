@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "0.2.0",
+  "moduleId": "tasks",
+  "entry": "screens.index",
+  "theme": {
+    "preferredSurface": "solid",
+    "accentRole": "productivity"
+  },
+  "screens": {
+    "index": {
+      "title": "Tasks",
+      "layout": "task-list",
+      "sections": [
+        {
+          "type": "hero",
+          "title": "Today",
+          "subtitle": "Plan your next useful action.",
+          "actions": ["createTask"]
+        },
+        {
+          "type": "filters",
+          "resource": "tasks",
+          "options": ["Today", "Active", "Done", "All"]
+        },
+        {
+          "type": "resourceList",
+          "resource": "tasks",
+          "emptyState": {
+            "title": "No active tasks",
+            "description": "Add a task to start.",
+            "action": "createTask"
+          }
+        }
+      ]
+    }
+  },
+  "actions": {
+    "createTask": {
+      "label": "New task",
+      "kind": "create",
+      "resource": "tasks",
+      "defaultPayload": {"title": "New task"}
+    }
+  },
+  "resources": {
+    "tasks": {
+      "type": "collection",
+      "endpoint": "/api/modula/tasks",
+      "responseKey": "tasks",
+      "itemResponseKey": "task",
+      "idField": "id",
+      "titleField": "title",
+      "statusField": "done",
+      "searchFields": ["title"],
+      "methods": {
+        "list": "GET",
+        "create": "POST",
+        "update": "PATCH",
+        "delete": "DELETE"
+      }
+    }
+  }
+}

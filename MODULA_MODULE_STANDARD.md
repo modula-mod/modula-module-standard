@@ -1,154 +1,79 @@
 # MMS - Modula Module Standard
 
-`mms.version = "0.2.0"`
+`mms.version = "0.3.0"`
 
-MMS defines how a Modula module declares identity, permissions, compatible UI surfaces, package-owned UI contracts, data ownership, actions, versioning, and registry behavior.
+MMS defines how a Modula module declares identity, GitHub source, runtime mode, shell mode, surfaces, navigation, UI contracts, permissions, hooks, events, actions, data ownership, versioning, documentation, and sandbox posture.
 
-## Module Manifest
+## Package Principle
 
-```json
-{
-  "mmsVersion": "0.2.0",
-  "id": "vault-notes",
-  "name": "Vault Notes",
-  "version": "0.2.0",
-  "status": "available",
-  "category": "productivity",
-  "categories": ["productivity", "private", "notes"],
-  "description": "Private notes for your Modula space.",
-  "screenshots": [
-    {
-      "title": "Private notes runtime screen",
-      "path": "screenshots/mobile-preview.json",
-      "description": "Package-owned Vault Notes UI contract rendered by Modula.",
-      "surface": "route"
-    }
-  ],
-  "source": {
-    "type": "github",
-    "repo": "modula-mod/modula-module-vault-notes",
-    "ref": "vault-notes-v0.2.0",
-    "path": "modula.module.json"
-  },
-  "entry": {
-    "type": "modula-ui-contract",
-    "route": "/module/vault-notes"
-  },
-  "ownerTypes": ["user", "team", "business"],
-  "permissions": ["local-storage"],
-  "surfaces": ["board", "profile", "settings", "route", "marketplace"],
-  "capabilities": ["notes.create", "notes.update", "notes.delete", "notes.search"],
-  "data": {
-    "provider": "modula-core",
-    "storage": "json-file",
-    "sync": "planned",
-    "contract": {
-      "schemaVersion": "0.2.0",
-      "entry": "data/module.data.json"
-    }
-  },
-  "ui": {
-    "type": "modula-ui-contract",
-    "schemaVersion": "0.2.0",
-    "entry": "ui/module.ui.json",
-    "usesDesignStandard": true,
-    "supportsSurfaceTypes": true,
-    "supportsTextScale": true,
-    "supportsReduceMotion": true
-  },
-  "lifecycle": {
-    "install": "manual",
-    "update": "manual",
-    "uninstall": "preserve-data",
-    "installable": true,
-    "updateable": true,
-    "rollbackable": true
-  },
-  "compatibility": {
-    "minimumModulaVersion": "0.2.0",
-    "minModulaVersion": "0.2.0",
-    "minHostVersion": "0.2.0",
-    "hostRendered": true
-  },
-  "minimumModulaVersion": "0.2.0",
-  "changelogSource": {
-    "type": "github",
-    "path": "CHANGELOG.md"
-  },
-  "changelog": [
-    {
-      "version": "0.2.0",
-      "date": "2026-07-01",
-      "notes": "Adds package-owned UI, screen, data, action, and permission contracts for the safe host-rendered module runtime."
-    }
-  ],
-  "integrity": {
-    "hash": null,
-    "signature": null
-  }
-}
-```
+A Modula module is a real app/plugin package, not a hardcoded host page.
 
-## Required Fields
+The host owns:
+- registry and package fetch;
+- installed/enabled/disabled/uninstalled state;
+- permission gates;
+- theme/surface inheritance;
+- safe rendering;
+- lifecycle actions;
+- marketplace presentation;
+- rollback and future signatures.
 
-- `mmsVersion`: MMS standard version used by the manifest.
-- `id`: stable kebab-case module ID.
-- `name`: user-facing module name.
-- `version`: semver module version.
-- `status`: current module availability state.
-- `category`: product category.
-- `categories`: optional category tags for store/library browsing.
-- `description`: concise purpose statement.
-- `screenshots`: optional preview descriptors for store/detail surfaces.
-- `source`: GitHub repo/ref/path for the source package manifest.
-- `entry`: host-rendered, package UI contract, or future package-rendered runtime entry metadata.
-- `ownerTypes`: allowed owners.
-- `permissions`: capability declaration.
-- `surfaces`: surfaces where the module may appear.
-- `capabilities`: named runtime capabilities exposed by the module.
-- `data`: provider/storage/sync declaration and optional data contract pointer.
-- `ui`: package UI contract pointer plus compatibility with Modula design/runtime settings.
-- `lifecycle`: install, update, and uninstall behavior.
-- `compatibility`: Modula runtime compatibility metadata.
-- `minimumModulaVersion`: minimum compatible Modula app version.
-- `changelogSource`: optional file-backed changelog source.
-- `changelog`: auditable version notes.
-- `integrity`: reserved hash/signature fields.
+The module repo owns:
+- `modula.module.json`;
+- README/changelog/docs;
+- UI contracts;
+- actions;
+- hooks/events;
+- data schemas and migrations;
+- permissions;
+- assets and screenshots;
+- tests and agent context.
 
-## Statuses
+## Runtime Modes
 
-- `local`: shipped locally in the app.
-- `core`: required system module.
-- `installed`: installed by the user or owner.
-- `available`: available for install.
-- `planned`: visible roadmap item, not installable.
-- `disabled`: present but disabled.
-- `archived`: no longer active.
+- `host-rendered-json`: supported now. The backend fetches package JSON and the host renders safe primitives.
+- `remote-ui-contract`: planned. Richer host-rendered primitives, no arbitrary module JavaScript.
+- `sandboxed-webview`: planned. Isolated iframe/webview with CSP, strict permissions, and a message bridge.
+- `signed-native-bundle`: future. Reviewed and signed bundles with versioning and rollback.
+
+## Required Manifest Areas
+
+- Identity: `id`, `slug`, `name`, `shortName`, `version`, `publisher`, `description`, `categories`, `tags`, `license`, `visibility`.
+- Source: GitHub `owner`, `repo`, `ref`, `manifestPath`, and docs paths.
+- Runtime: mode and support status.
+- Shell: app experience mode such as `standard`, `editor`, `dashboard`, `media-player`, `map`, `secure`, `game`, or `immersive`.
+- Surfaces: board, route, profile, settings, marketplace, chat, composer, notification, sidebar, bottom-bar, floating-player, share-sheet, team, and business.
+- Navigation: module routes and optional module-owned bottom bar metadata.
+- UI package: entry, screens, components, theme, and animations.
+- Permissions: human-readable permission cards with reason, required flag, and risk.
+- Hooks/events: declared extension points and lifecycle/user events.
+- Actions: callable commands the host may expose.
+- Data: collections, schemas, indexes, migrations, owner types, backup/export/sync posture.
+
+## Current Host Rules
+
+- Do not execute arbitrary remote module code.
+- Fetch packages through Modula Core, never directly from the frontend with secrets.
+- Keep uninstalled modules visible in registry and Available views.
+- Hide uninstalled and disabled modules from Board unless the user explicitly enables a disabled view.
+- Render README, changelog, docs, permissions, and previews as product surfaces, not raw diagnostics.
+- Preserve module data on uninstall unless a future reviewed destructive flow explicitly says otherwise.
 
 ## Versioning
 
-- Standard version: `mmsVersion`, semver.
-- Registry version: `registryVersion`, semver.
-- Module version: manifest `version`, semver.
-- Modula app version: `minimumModulaVersion`, semver compatibility gate.
+- MMS version: `mmsVersion`.
+- Registry version: `registryVersion`.
+- Module version: `version`.
+- GitHub release ref: `source.ref`.
+- Public release tag examples: `vault-notes-v0.3.0`, `tasks-v0.3.0`.
 
-## Phase 18D Runtime Flow
+## Release Gate
 
-1. Modula Core fetches the registry and GitHub module manifests.
-2. The module manifest points to `ui/module.ui.json`, `data/module.data.json`, and `permissions/module.permissions.json`.
-3. Modula Core fetches, hydrates, and caches the package runtime server-side.
-4. Frontend asks Modula Core for registry, installed runtime state, and `/api/modula/modules/:moduleId/runtime`.
-5. The Modula host renders the package-owned UI contract through the safe Module Renderer.
-6. Module actions call approved backend endpoints declared in the resource contract.
-7. Host fallback screens may be used only when the runtime package fails.
-8. Future package-rendered runtimes may load reviewed/signed code only after trust/integrity controls are ready.
-
-## Rules
-
-- The manifest is the source of truth for module identity, permissions, and surfaces.
-- Modules must use the Modula Design Standard.
-- Module APIs should use `/api/modula/{module-id}/...`.
-- Frontend clients must skip invalid manifests with a warning instead of crashing.
-- Private registry fetching must be mediated by backend endpoints, not frontend tokens.
-- MMS 0.2.0 does not permit arbitrary remote JavaScript or React Native code execution.
-- Integrity hashes and signatures are reserved for a later standard revision.
+A release-ready module package should include:
+- manifest validation;
+- UI contract validation;
+- permissions review;
+- install/update/disable/enable/uninstall/reinstall smoke tests;
+- README/changelog/docs;
+- screenshots or preview metadata;
+- version bump and Git tag.

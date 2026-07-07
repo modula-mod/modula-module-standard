@@ -1,8 +1,51 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://modula.digital/schemas/mms/0.2.0/module.data.schema.json",
+  "$id": "https://modula.digital/schemas/mms/0.3.0/module.data.schema.json",
   "title": "Modula Module Data",
   "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["collections", "ownerTypes"],
+      "properties": {
+        "collections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label", "schema"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "label": {"type": "string", "minLength": 1},
+              "schema": {"type": "string", "minLength": 1},
+              "indexes": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "migrations": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "ownerTypes": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["user", "team", "business", "community", "project"]},
+          "minItems": 1
+        },
+        "backup": {"type": "boolean"},
+        "export": {"type": "boolean"},
+        "sync": {"type": "string", "enum": ["local", "backend", "cloud", "hybrid", "planned"]},
+        "provider": {"type": "string"},
+        "storage": {"type": "string"},
+        "contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {"type": "string"},
+            "entry": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
     {
       "type": "object",
       "additionalProperties": false,
@@ -15,7 +58,7 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "schemaVersion": {"const": "0.2.0"},
+            "schemaVersion": {"type": "string"},
             "entry": {"type": "string", "minLength": 1}
           }
         }
@@ -26,7 +69,7 @@
       "additionalProperties": false,
       "required": ["schemaVersion", "moduleId", "resources"],
       "properties": {
-        "schemaVersion": {"const": "0.2.0"},
+        "schemaVersion": {"const": "0.3.0"},
         "moduleId": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
         "resources": {
           "type": "object",

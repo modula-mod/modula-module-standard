@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://modula.digital/schemas/mms/0.2.0/module.screen.schema.json",
+  "$id": "https://modula.digital/schemas/mms/0.3.0/module.screen.schema.json",
   "title": "Modula Module Screen",
   "type": "object",
   "additionalProperties": false,

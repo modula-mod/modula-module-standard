@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://modula.digital/schemas/mms/0.2.0/module.ui.schema.json",
+  "$id": "https://modula.digital/schemas/mms/0.3.0/module.ui.schema.json",
   "title": "Modula Module UI Runtime Contract",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "moduleId", "entry", "screens", "actions", "resources"],
   "properties": {
-    "schemaVersion": {"const": "0.2.0"},
+    "schemaVersion": {"enum": ["0.2.0", "0.3.0"]},
     "moduleId": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
     "entry": {"type": "string", "pattern": "^screens\\.[a-zA-Z0-9_-]+$"},
     "theme": {

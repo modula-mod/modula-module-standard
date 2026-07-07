@@ -1,51 +1,220 @@
 {
-  "mmsVersion": "0.2.0",
+  "mmsVersion": "0.3.0",
   "id": "tasks",
+  "slug": "tasks",
   "name": "Tasks",
-  "version": "0.2.0",
+  "shortName": "Tasks",
+  "version": "0.3.0",
+  "publisher": "modula-mod",
+  "description": "Simple tasks for your Modula space.",
+  "longDescription": "Tasks is a lightweight action module for quick capture, today-first planning, and future team/project workflows inside Modula.",
   "status": "available",
   "category": "productivity",
-  "categories": ["productivity", "planning", "tasks"],
-  "description": "Simple tasks for your Modula space.",
-  "screenshots": [
-    {
-      "title": "Tasks runtime screen",
-      "path": "screenshots/mobile-preview.json",
-      "description": "Package-owned Tasks UI contract rendered by Modula.",
-      "surface": "route"
-    }
+  "categories": [
+    "productivity",
+    "planning",
+    "tasks"
   ],
+  "tags": [
+    "tasks",
+    "today",
+    "planning",
+    "profile-os"
+  ],
+  "license": "open-source",
+  "visibility": "public",
   "source": {
+    "provider": "github",
     "type": "github",
+    "owner": "modula-mod",
     "repo": "modula-mod/modula-module-tasks",
-    "ref": "tasks-v0.2.0",
-    "path": "modula.module.json"
+    "ref": "tasks-v0.3.0",
+    "manifestPath": "modula.module.json",
+    "path": "modula.module.json",
+    "readmePath": "README.md",
+    "changelogPath": "CHANGELOG.md",
+    "filetreePath": "FILETREE.md",
+    "contextPath": "CONTEXT.md",
+    "agentsPath": "AGENTS.md",
+    "runtimePath": "RUNTIME.md",
+    "securityPath": "SECURITY.md",
+    "testingPath": "TESTING.md",
+    "permissionsPath": "PERMISSIONS.md",
+    "apiPath": "API.md",
+    "marketplacePath": "MARKETPLACE.md"
+  },
+  "runtime": {
+    "mode": "host-rendered-json",
+    "support": "supported",
+    "sandbox": "none-required",
+    "entry": "ui/module.ui.json"
+  },
+  "shell": {
+    "mode": "standard"
   },
   "entry": {
     "type": "modula-ui-contract",
     "route": "/module/tasks"
   },
-  "ownerTypes": ["user", "team", "business"],
-  "permissions": ["local-storage"],
-  "surfaces": ["board", "profile", "settings", "route", "marketplace"],
-  "capabilities": ["tasks.create", "tasks.toggle", "tasks.delete", "tasks.filter"],
+  "ownerTypes": [
+    "user",
+    "team",
+    "business",
+    "project"
+  ],
+  "surfaces": [
+    "board",
+    "route",
+    "profile",
+    "settings",
+    "marketplace"
+  ],
+  "navigation": {
+    "routes": [
+      {
+        "id": "tasks.route",
+        "path": "/module/tasks",
+        "title": "Tasks",
+        "surface": "route"
+      },
+      {
+        "id": "tasks.settings",
+        "path": "/settings/modules/tasks",
+        "title": "Tasks Settings",
+        "surface": "settings"
+      }
+    ],
+    "bottomBar": {
+      "mode": "inherit",
+      "items": []
+    }
+  },
+  "permissions": [
+    {
+      "id": "local-storage",
+      "label": "Task storage",
+      "reason": "Stores tasks in Modula Core module data so the Board and task route can stay in sync.",
+      "required": true,
+      "risk": "low",
+      "scope": "/api/modula/tasks",
+      "network": false,
+      "dataStored": "Task title, done state, priority, created time, and updated time.",
+      "dataExported": "None by default."
+    }
+  ],
+  "surfacesLegacy": [
+    "board",
+    "profile",
+    "settings",
+    "route",
+    "marketplace"
+  ],
+  "capabilities": [
+    "tasks.create",
+    "tasks.toggle",
+    "tasks.delete",
+    "tasks.filter"
+  ],
+  "hooks": [
+    "board.quickActions",
+    "board.widgets",
+    "profile.workspace",
+    "settings.sections"
+  ],
+  "events": [
+    "module.installed",
+    "module.updated",
+    "module.disabled",
+    "module.enabled",
+    "module.uninstalled",
+    "task.completed"
+  ],
+  "actions": [
+    {
+      "id": "create-task",
+      "label": "New task",
+      "icon": "plus",
+      "kind": "create",
+      "permission": "local-storage"
+    },
+    {
+      "id": "toggle-task",
+      "label": "Complete task",
+      "icon": "check",
+      "kind": "update",
+      "permission": "local-storage"
+    },
+    {
+      "id": "delete-task",
+      "label": "Delete task",
+      "icon": "trash",
+      "kind": "delete",
+      "confirm": true,
+      "destructive": true,
+      "permission": "local-storage"
+    },
+    {
+      "id": "filter-tasks",
+      "label": "Filter tasks",
+      "icon": "list-filter",
+      "kind": "custom",
+      "permission": "local-storage"
+    }
+  ],
   "data": {
     "provider": "modula-core",
     "storage": "json-file",
-    "sync": "planned",
+    "sync": "backend",
     "contract": {
-      "schemaVersion": "0.2.0",
+      "schemaVersion": "0.3.0",
       "entry": "data/module.data.json"
-    }
+    },
+    "collections": [
+      {
+        "id": "tasks",
+        "label": "Tasks",
+        "schema": "data/schema.json",
+        "indexes": "data/indexes.json"
+      }
+    ],
+    "migrations": [
+      "data/migrations/001-initial.json"
+    ],
+    "ownerTypes": [
+      "user",
+      "team",
+      "business",
+      "project"
+    ],
+    "backup": true,
+    "export": true
   },
   "ui": {
     "type": "modula-ui-contract",
-    "schemaVersion": "0.2.0",
+    "schemaVersion": "0.3.0",
     "entry": "ui/module.ui.json",
     "usesDesignStandard": true,
     "supportsSurfaceTypes": true,
     "supportsTextScale": true,
     "supportsReduceMotion": true
+  },
+  "uiPackage": {
+    "entry": "ui/module.ui.json",
+    "screens": {
+      "index": "ui/screens/index.ui.json",
+      "detail": "ui/screens/detail.ui.json",
+      "editor": "ui/screens/editor.ui.json",
+      "settings": "ui/screens/settings.ui.json"
+    },
+    "components": {
+      "card": "ui/components/card.ui.json",
+      "list": "ui/components/list.ui.json",
+      "toolbar": "ui/components/toolbar.ui.json",
+      "emptyState": "ui/components/empty-state.ui.json",
+      "actionRow": "ui/components/action-row.ui.json"
+    },
+    "theme": "ui/theme/tokens.json",
+    "animations": "ui/animations/transitions.json"
   },
   "lifecycle": {
     "install": "manual",
@@ -56,26 +225,53 @@
     "rollbackable": true
   },
   "compatibility": {
-    "minimumModulaVersion": "0.2.0",
-    "minModulaVersion": "0.2.0",
-    "minHostVersion": "0.2.0",
+    "minimumModulaVersion": "0.3.0",
+    "minModulaVersion": "0.3.0",
+    "minHostVersion": "0.3.0",
     "hostRendered": true
   },
-  "minimumModulaVersion": "0.2.0",
+  "minimumModulaVersion": "0.3.0",
   "changelogSource": {
     "type": "github",
     "path": "CHANGELOG.md"
   },
   "changelog": [
     {
+      "version": "0.3.0",
+      "date": "2026-07-07",
+      "notes": "Adds MMS v0.3 package docs, UI package metadata, permissions, hooks, events, actions, data schemas, marketplace metadata, and sandbox-ready runtime declarations."
+    },
+    {
       "version": "0.2.0",
       "date": "2026-07-01",
       "notes": "Adds package-owned UI, screen, data, action, and permission contracts for the safe host-rendered module runtime."
+    }
+  ],
+  "assets": {
+    "icon": "assets/icon.svg",
+    "iconPng": "assets/icon.png",
+    "cover": "assets/cover.png",
+    "logoDark": "assets/logo-dark.svg",
+    "logoLight": "assets/logo-light.svg"
+  },
+  "screenshots": [
+    {
+      "title": "Mobile light",
+      "path": "screenshots/mobile-light.png",
+      "description": "Tasks route preview in a light surface mode.",
+      "surface": "route"
     },
     {
-      "version": "0.1.2",
-      "date": "2026-06-30",
-      "notes": "Adds Module Store metadata, categories, preview descriptors, compatibility fields, changelog source, and rollback lifecycle capability."
+      "title": "Board card",
+      "path": "screenshots/board-card.png",
+      "description": "Board app icon/card preview.",
+      "surface": "board"
+    },
+    {
+      "title": "Detail",
+      "path": "screenshots/detail.png",
+      "description": "Module Store detail preview.",
+      "surface": "marketplace"
     }
   ],
   "integrity": {

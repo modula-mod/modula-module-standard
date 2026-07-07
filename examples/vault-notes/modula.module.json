@@ -1,51 +1,217 @@
 {
-  "mmsVersion": "0.2.0",
+  "mmsVersion": "0.3.0",
   "id": "vault-notes",
+  "slug": "vault-notes",
   "name": "Vault Notes",
-  "version": "0.2.0",
+  "shortName": "Notes",
+  "version": "0.3.0",
+  "publisher": "modula-mod",
+  "description": "Private notes for your Modula space.",
+  "longDescription": "Vault Notes is a calm private notebook module for fast capture, safe editing, and future encrypted/team note workflows inside Modula.",
   "status": "available",
   "category": "productivity",
-  "categories": ["productivity", "private", "notes"],
-  "description": "Private notes for your Modula space.",
-  "screenshots": [
-    {
-      "title": "Private notes runtime screen",
-      "path": "screenshots/mobile-preview.json",
-      "description": "Package-owned Vault Notes UI contract rendered by Modula.",
-      "surface": "route"
-    }
+  "categories": [
+    "productivity",
+    "private",
+    "notes"
   ],
+  "tags": [
+    "notes",
+    "privacy",
+    "capture",
+    "profile-os"
+  ],
+  "license": "open-source",
+  "visibility": "public",
   "source": {
+    "provider": "github",
     "type": "github",
+    "owner": "modula-mod",
     "repo": "modula-mod/modula-module-vault-notes",
-    "ref": "vault-notes-v0.2.0",
-    "path": "modula.module.json"
+    "ref": "vault-notes-v0.3.0",
+    "manifestPath": "modula.module.json",
+    "path": "modula.module.json",
+    "readmePath": "README.md",
+    "changelogPath": "CHANGELOG.md",
+    "filetreePath": "FILETREE.md",
+    "contextPath": "CONTEXT.md",
+    "agentsPath": "AGENTS.md",
+    "runtimePath": "RUNTIME.md",
+    "securityPath": "SECURITY.md",
+    "testingPath": "TESTING.md",
+    "permissionsPath": "PERMISSIONS.md",
+    "apiPath": "API.md",
+    "marketplacePath": "MARKETPLACE.md"
+  },
+  "runtime": {
+    "mode": "host-rendered-json",
+    "support": "supported",
+    "sandbox": "none-required",
+    "entry": "ui/module.ui.json"
+  },
+  "shell": {
+    "mode": "editor"
   },
   "entry": {
     "type": "modula-ui-contract",
     "route": "/module/vault-notes"
   },
-  "ownerTypes": ["user", "team", "business"],
-  "permissions": ["local-storage"],
-  "surfaces": ["board", "profile", "settings", "route", "marketplace"],
-  "capabilities": ["notes.create", "notes.update", "notes.delete", "notes.search"],
+  "ownerTypes": [
+    "user",
+    "team",
+    "business"
+  ],
+  "surfaces": [
+    "board",
+    "route",
+    "profile",
+    "settings",
+    "marketplace"
+  ],
+  "navigation": {
+    "routes": [
+      {
+        "id": "vault-notes.route",
+        "path": "/module/vault-notes",
+        "title": "Vault Notes",
+        "surface": "route"
+      },
+      {
+        "id": "vault-notes.settings",
+        "path": "/settings/modules/vault-notes",
+        "title": "Vault Notes Settings",
+        "surface": "settings"
+      }
+    ],
+    "bottomBar": {
+      "mode": "inherit",
+      "items": []
+    }
+  },
+  "permissions": [
+    {
+      "id": "local-storage",
+      "label": "Private note storage",
+      "reason": "Stores notes in Modula Core module data so they stay inside the user's Modula environment.",
+      "required": true,
+      "risk": "low",
+      "scope": "/api/modula/vault-notes",
+      "network": false,
+      "dataStored": "Note title, body, created time, and updated time.",
+      "dataExported": "None by default."
+    }
+  ],
+  "surfacesLegacy": [
+    "board",
+    "profile",
+    "settings",
+    "route",
+    "marketplace"
+  ],
+  "capabilities": [
+    "notes.create",
+    "notes.update",
+    "notes.delete",
+    "notes.search"
+  ],
+  "hooks": [
+    "board.widgets",
+    "profile.workspace",
+    "settings.sections"
+  ],
+  "events": [
+    "module.installed",
+    "module.updated",
+    "module.disabled",
+    "module.enabled",
+    "module.uninstalled",
+    "note.created"
+  ],
+  "actions": [
+    {
+      "id": "create-note",
+      "label": "New note",
+      "icon": "plus",
+      "kind": "create",
+      "permission": "local-storage"
+    },
+    {
+      "id": "update-note",
+      "label": "Save note",
+      "icon": "save",
+      "kind": "update",
+      "permission": "local-storage"
+    },
+    {
+      "id": "delete-note",
+      "label": "Delete note",
+      "icon": "trash",
+      "kind": "delete",
+      "confirm": true,
+      "destructive": true,
+      "permission": "local-storage"
+    },
+    {
+      "id": "search-notes",
+      "label": "Search notes",
+      "icon": "search",
+      "kind": "custom",
+      "permission": "local-storage"
+    }
+  ],
   "data": {
     "provider": "modula-core",
     "storage": "json-file",
-    "sync": "planned",
+    "sync": "backend",
     "contract": {
-      "schemaVersion": "0.2.0",
+      "schemaVersion": "0.3.0",
       "entry": "data/module.data.json"
-    }
+    },
+    "collections": [
+      {
+        "id": "notes",
+        "label": "Notes",
+        "schema": "data/schema.json",
+        "indexes": "data/indexes.json"
+      }
+    ],
+    "migrations": [
+      "data/migrations/001-initial.json"
+    ],
+    "ownerTypes": [
+      "user",
+      "team",
+      "business"
+    ],
+    "backup": true,
+    "export": true
   },
   "ui": {
     "type": "modula-ui-contract",
-    "schemaVersion": "0.2.0",
+    "schemaVersion": "0.3.0",
     "entry": "ui/module.ui.json",
     "usesDesignStandard": true,
     "supportsSurfaceTypes": true,
     "supportsTextScale": true,
     "supportsReduceMotion": true
+  },
+  "uiPackage": {
+    "entry": "ui/module.ui.json",
+    "screens": {
+      "index": "ui/screens/index.ui.json",
+      "detail": "ui/screens/detail.ui.json",
+      "editor": "ui/screens/editor.ui.json",
+      "settings": "ui/screens/settings.ui.json"
+    },
+    "components": {
+      "card": "ui/components/card.ui.json",
+      "list": "ui/components/list.ui.json",
+      "toolbar": "ui/components/toolbar.ui.json",
+      "emptyState": "ui/components/empty-state.ui.json",
+      "actionRow": "ui/components/action-row.ui.json"
+    },
+    "theme": "ui/theme/tokens.json",
+    "animations": "ui/animations/transitions.json"
   },
   "lifecycle": {
     "install": "manual",
@@ -56,26 +222,53 @@
     "rollbackable": true
   },
   "compatibility": {
-    "minimumModulaVersion": "0.2.0",
-    "minModulaVersion": "0.2.0",
-    "minHostVersion": "0.2.0",
+    "minimumModulaVersion": "0.3.0",
+    "minModulaVersion": "0.3.0",
+    "minHostVersion": "0.3.0",
     "hostRendered": true
   },
-  "minimumModulaVersion": "0.2.0",
+  "minimumModulaVersion": "0.3.0",
   "changelogSource": {
     "type": "github",
     "path": "CHANGELOG.md"
   },
   "changelog": [
     {
+      "version": "0.3.0",
+      "date": "2026-07-07",
+      "notes": "Adds MMS v0.3 package docs, UI package metadata, permissions, hooks, events, actions, data schemas, marketplace metadata, and sandbox-ready runtime declarations."
+    },
+    {
       "version": "0.2.0",
       "date": "2026-07-01",
       "notes": "Adds package-owned UI, screen, data, action, and permission contracts for the safe host-rendered module runtime."
+    }
+  ],
+  "assets": {
+    "icon": "assets/icon.svg",
+    "iconPng": "assets/icon.png",
+    "cover": "assets/cover.png",
+    "logoDark": "assets/logo-dark.svg",
+    "logoLight": "assets/logo-light.svg"
+  },
+  "screenshots": [
+    {
+      "title": "Mobile light",
+      "path": "screenshots/mobile-light.png",
+      "description": "Vault Notes route preview in a light surface mode.",
+      "surface": "route"
     },
     {
-      "version": "0.1.2",
-      "date": "2026-06-30",
-      "notes": "Adds Module Store metadata, categories, preview descriptors, compatibility fields, changelog source, and rollback lifecycle capability."
+      "title": "Board card",
+      "path": "screenshots/board-card.png",
+      "description": "Board app icon/card preview.",
+      "surface": "board"
+    },
+    {
+      "title": "Detail",
+      "path": "screenshots/detail.png",
+      "description": "Module Store detail preview.",
+      "surface": "marketplace"
     }
   ],
   "integrity": {

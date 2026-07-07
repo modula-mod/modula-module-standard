@@ -7,7 +7,12 @@ export type ModulaModuleStatus =
   | 'disabled'
   | 'archived'
 
-export type ModulaModuleOwnerType = 'user' | 'team' | 'business'
+export type ModulaModuleOwnerType =
+  | 'user'
+  | 'team'
+  | 'business'
+  | 'community'
+  | 'project'
 
 export type ModulaModulePermissionSet = {
   storage: boolean
@@ -50,10 +55,24 @@ export type ModulaModuleVersion = {
 }
 
 export type ModulaModuleSource = {
-  type: 'github'
+  provider?: 'github'
+  type?: 'github'
+  owner?: string
   repo: string
   ref: string
+  manifestPath?: string
   path?: string
+  readmePath?: string
+  changelogPath?: string
+  filetreePath?: string
+  contextPath?: string
+  agentsPath?: string
+  runtimePath?: string
+  securityPath?: string
+  testingPath?: string
+  permissionsPath?: string
+  apiPath?: string
+  marketplacePath?: string
 }
 
 export type ModulaModuleScreenshot = {
@@ -68,26 +87,126 @@ export type ModulaModuleChangelogSource = {
   path: string
 }
 
-export type ModulaModuleManifest = {
-  mmsVersion: '0.2.0'
+export type ModulaModulePermission = {
   id: string
+  label: string
+  reason: string
+  required: boolean
+  risk: 'low' | 'medium' | 'high'
+  scope?: string
+}
+
+export type ModulaRuntimeMode =
+  | 'host-rendered-json'
+  | 'remote-ui-contract'
+  | 'sandboxed-webview'
+  | 'signed-native-bundle'
+
+export type ModulaShellMode =
+  | 'standard'
+  | 'editor'
+  | 'dashboard'
+  | 'chat'
+  | 'media-player'
+  | 'map'
+  | 'secure'
+  | 'game'
+  | 'immersive'
+
+export type ModulaModuleSurface =
+  | 'board'
+  | 'route'
+  | 'profile'
+  | 'settings'
+  | 'marketplace'
+  | 'composer'
+  | 'chat'
+  | 'notification'
+  | 'sidebar'
+  | 'bottom-bar'
+  | 'floating-player'
+  | 'share-sheet'
+  | 'team'
+  | 'business'
+  | 'secure-settings'
+
+export type ModulaModuleAction = {
+  id: string
+  label: string
+  icon?: string
+  kind: 'create' | 'update' | 'delete' | 'open' | 'share' | 'export' | 'custom'
+  confirm?: boolean
+  destructive?: boolean
+  permission?: string
+}
+
+export type ModulaModuleManifest = {
+  mmsVersion: '0.3.0'
+  id: string
+  slug: string
   name: string
+  shortName?: string
   version: string
+  publisher: string
+  description: string
+  longDescription?: string
+  tags: string[]
+  license: 'open-source' | 'source-available' | 'commercial' | 'private'
+  visibility: 'public' | 'private' | 'unlisted'
   status: ModulaModuleStatus
   category: string
-  categories?: string[]
-  description: string
+  categories: string[]
   screenshots?: ModulaModuleScreenshot[]
   source: ModulaModuleSource
+  runtime: {
+    mode: ModulaRuntimeMode
+    support: 'supported' | 'planned' | 'future'
+    sandbox?: string
+    entry?: string
+  }
+  shell: {
+    mode: ModulaShellMode
+  }
   entry: {
-    type: 'host-rendered' | 'modula-ui-contract' | 'package-rendered'
+    type:
+      | 'host-rendered'
+      | 'modula-ui-contract'
+      | 'package-rendered'
+      | ModulaRuntimeMode
     route: string
     component?: string
   }
   ownerTypes: ModulaModuleOwnerType[]
-  permissions: string[] | ModulaModulePermissionSet
-  surfaces: string[] | ModulaModuleSurfaceConfig
+  permissions: ModulaModulePermission[] | string[] | ModulaModulePermissionSet
+  surfaces: ModulaModuleSurface[] | string[] | ModulaModuleSurfaceConfig
+  navigation: {
+    routes: Array<{
+      id: string
+      path: string
+      title: string
+      surface: string
+    }>
+    bottomBar?: {
+      mode: 'inherit' | 'module-owned'
+      items: Array<{
+        id: string
+        label: string
+        icon: string
+        route: string
+      }>
+    }
+  }
+  uiPackage: {
+    entry: string
+    screens: Record<string, string>
+    components?: Record<string, string>
+    theme?: string
+    animations?: string
+  }
   capabilities: string[]
+  hooks: string[]
+  events: string[]
+  actions: ModulaModuleAction[]
   data: ModulaModuleDataConfig
   ui: ModulaModuleUiConfig
   lifecycle: {
@@ -114,7 +233,7 @@ export type ModulaModuleManifest = {
 }
 
 export type ModulaModuleRegistry = {
-  mmsVersion: '0.2.0'
+  mmsVersion: '0.3.0'
   registryVersion: string
   source: string
   modules: ModulaModuleManifest[]

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.2.0",
+  "schemaVersion": "0.3.0",
   "moduleId": "vault-notes",
   "entry": "screens.index",
   "theme": {
@@ -8,30 +8,16 @@
   },
   "screens": {
     "index": {
-      "title": "Vault Notes",
-      "layout": "module-list-detail",
-      "sections": [
-        {
-          "type": "hero",
-          "title": "Private notes",
-          "subtitle": "Capture ideas inside your Modula space.",
-          "actions": ["createNote"]
-        },
-        {
-          "type": "search",
-          "resource": "notes",
-          "placeholder": "Search notes"
-        },
-        {
-          "type": "resourceList",
-          "resource": "notes",
-          "emptyState": {
-            "title": "No notes yet",
-            "description": "Create your first private note.",
-            "action": "createNote"
-          }
-        }
-      ]
+      "$ref": "ui/screens/index.ui.json"
+    },
+    "detail": {
+      "$ref": "ui/screens/detail.ui.json"
+    },
+    "editor": {
+      "$ref": "ui/screens/editor.ui.json"
+    },
+    "settings": {
+      "$ref": "ui/screens/settings.ui.json"
     }
   },
   "actions": {
@@ -39,7 +25,34 @@
       "label": "New note",
       "kind": "create",
       "resource": "notes",
-      "defaultPayload": {"title": "Untitled note", "body": ""}
+      "defaultPayload": {
+        "title": "Untitled note",
+        "body": ""
+      }
+    },
+    "updateNote": {
+      "label": "Save",
+      "kind": "update",
+      "resource": "notes",
+      "requiresSelection": true
+    },
+    "deleteNote": {
+      "label": "Delete",
+      "kind": "delete",
+      "resource": "notes",
+      "requiresSelection": true,
+      "confirm": true,
+      "destructive": true
+    },
+    "selectNote": {
+      "label": "Open",
+      "kind": "open",
+      "resource": "notes"
+    },
+    "searchNotes": {
+      "label": "Search",
+      "kind": "search",
+      "resource": "notes"
     }
   },
   "resources": {

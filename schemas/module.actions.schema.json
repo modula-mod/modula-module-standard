@@ -1,23 +1,53 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://modula.digital/schemas/mms/0.2.0/module.actions.schema.json",
+  "$id": "https://modula.digital/schemas/mms/0.3.0/module.actions.schema.json",
   "title": "Modula Module Actions",
-  "type": "object",
-  "additionalProperties": {
-    "type": "object",
-    "additionalProperties": false,
-    "required": ["label", "kind", "resource"],
-    "properties": {
-      "label": {"type": "string", "minLength": 1},
-      "kind": {
-        "type": "string",
-        "enum": ["create", "update", "delete", "toggle", "filter", "search", "open", "configure"]
-      },
-      "resource": {"type": "string", "minLength": 1},
-      "field": {"type": "string", "minLength": 1},
-      "defaultPayload": {"type": "object", "additionalProperties": true},
-      "patch": {"type": "object", "additionalProperties": true},
-      "requiresSelection": {"type": "boolean"}
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "kind"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "icon": {"type": "string"},
+        "kind": {
+          "type": "string",
+          "enum": ["create", "update", "delete", "open", "share", "export", "custom", "toggle", "filter", "search", "configure"]
+        },
+        "resource": {"type": "string", "minLength": 1},
+        "field": {"type": "string", "minLength": 1},
+        "defaultPayload": {"type": "object", "additionalProperties": true},
+        "patch": {"type": "object", "additionalProperties": true},
+        "requiresSelection": {"type": "boolean"},
+        "confirm": {"type": "boolean"},
+        "destructive": {"type": "boolean"},
+        "permission": {"type": "string"}
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "kind", "resource"],
+        "properties": {
+          "label": {"type": "string", "minLength": 1},
+          "icon": {"type": "string"},
+          "kind": {
+            "type": "string",
+            "enum": ["create", "update", "delete", "toggle", "filter", "search", "open", "configure", "share", "export", "custom"]
+          },
+          "resource": {"type": "string", "minLength": 1},
+          "field": {"type": "string", "minLength": 1},
+          "defaultPayload": {"type": "object", "additionalProperties": true},
+          "patch": {"type": "object", "additionalProperties": true},
+          "requiresSelection": {"type": "boolean"},
+          "confirm": {"type": "boolean"},
+          "destructive": {"type": "boolean"},
+          "permission": {"type": "string"}
+        }
+      }
     }
-  }
+  ]
 }

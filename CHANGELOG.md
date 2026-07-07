@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- Defines the future-proof Modula plugin/runtime package model.
+- Adds GitHub package source metadata, package docs paths, runtime modes, shell modes, richer surfaces, navigation, UI package metadata, permission risk labels, hooks/events, action contracts, and data collection metadata.
+- Adds sandbox, marketplace, security, versioning, migrations, UI contract, permissions, hooks/events, and package structure documentation.
+- Adds future app examples for music player, CRM, crypto wallet, maps, and HR modules.
+- Updates Vault Notes and Tasks examples to v0.3.0 package docs and contracts.
+
 ## 0.2.0
 
 - Added package-owned module UI runtime contracts.

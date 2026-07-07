@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.2.0",
+  "schemaVersion": "0.3.0",
   "moduleId": "tasks",
   "entry": "screens.index",
   "theme": {
@@ -8,30 +8,16 @@
   },
   "screens": {
     "index": {
-      "title": "Tasks",
-      "layout": "task-list",
-      "sections": [
-        {
-          "type": "hero",
-          "title": "Today",
-          "subtitle": "Plan your next useful action.",
-          "actions": ["createTask"]
-        },
-        {
-          "type": "filters",
-          "resource": "tasks",
-          "options": ["Today", "Active", "Done", "All"]
-        },
-        {
-          "type": "resourceList",
-          "resource": "tasks",
-          "emptyState": {
-            "title": "No active tasks",
-            "description": "Add a task to start.",
-            "action": "createTask"
-          }
-        }
-      ]
+      "$ref": "ui/screens/index.ui.json"
+    },
+    "detail": {
+      "$ref": "ui/screens/detail.ui.json"
+    },
+    "editor": {
+      "$ref": "ui/screens/editor.ui.json"
+    },
+    "settings": {
+      "$ref": "ui/screens/settings.ui.json"
     }
   },
   "actions": {
@@ -39,7 +25,30 @@
       "label": "New task",
       "kind": "create",
       "resource": "tasks",
-      "defaultPayload": {"title": "New task"}
+      "defaultPayload": {
+        "title": "New task",
+        "priority": "normal"
+      }
+    },
+    "toggleTask": {
+      "label": "Toggle",
+      "kind": "toggle",
+      "resource": "tasks",
+      "field": "done",
+      "requiresSelection": true
+    },
+    "deleteTask": {
+      "label": "Delete",
+      "kind": "delete",
+      "resource": "tasks",
+      "requiresSelection": true,
+      "confirm": true,
+      "destructive": true
+    },
+    "filterTasks": {
+      "label": "Filter",
+      "kind": "filter",
+      "resource": "tasks"
     }
   },
   "resources": {

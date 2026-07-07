@@ -1,36 +1,47 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://modula.digital/schemas/mms/0.2.0/module.manifest.schema.json",
+  "$id": "https://modula.digital/schemas/mms/0.3.0/module.manifest.schema.json",
   "title": "Modula Module Manifest",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": [
     "mmsVersion",
     "id",
+    "slug",
     "name",
     "version",
-    "status",
-    "category",
+    "publisher",
     "description",
+    "categories",
+    "tags",
+    "license",
+    "visibility",
     "source",
-    "entry",
-    "ownerTypes",
-    "permissions",
+    "runtime",
+    "shell",
     "surfaces",
-    "capabilities",
-    "data",
+    "navigation",
     "ui",
+    "uiPackage",
+    "permissions",
+    "actions",
+    "hooks",
+    "events",
+    "data",
     "lifecycle",
     "compatibility",
-    "minimumModulaVersion",
-    "changelog",
     "integrity"
   ],
   "properties": {
-    "mmsVersion": {"const": "0.2.0"},
+    "mmsVersion": {"const": "0.3.0"},
     "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+    "slug": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
     "name": {"type": "string", "minLength": 1},
+    "shortName": {"type": "string", "minLength": 1},
     "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"},
+    "publisher": {"type": "string", "minLength": 1},
+    "description": {"type": "string", "minLength": 1},
+    "longDescription": {"type": "string"},
     "status": {
       "type": "string",
       "enum": ["local", "core", "installed", "available", "planned", "disabled", "archived"]
@@ -41,38 +52,74 @@
       "items": {"type": "string", "minLength": 1},
       "uniqueItems": true
     },
-    "description": {"type": "string", "minLength": 1},
-    "screenshots": {
+    "tags": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["title", "path"],
-        "properties": {
-          "title": {"type": "string", "minLength": 1},
-          "path": {"type": "string", "minLength": 1},
-          "description": {"type": "string"},
-          "surface": {"type": "string"}
-        }
-      }
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "license": {
+      "type": "string",
+      "enum": ["open-source", "source-available", "commercial", "private"]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["public", "private", "unlisted"]
     },
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "repo", "ref"],
+      "required": ["provider", "owner", "repo", "ref", "manifestPath"],
       "properties": {
-        "type": {"type": "string", "enum": ["github"]},
+        "provider": {"const": "github"},
+        "type": {"const": "github"},
+        "owner": {"type": "string", "minLength": 1},
         "repo": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"},
         "ref": {"type": "string", "minLength": 1},
-        "path": {"type": "string", "minLength": 1}
+        "manifestPath": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "readmePath": {"type": "string", "minLength": 1},
+        "changelogPath": {"type": "string", "minLength": 1},
+        "filetreePath": {"type": "string", "minLength": 1},
+        "contextPath": {"type": "string", "minLength": 1},
+        "agentsPath": {"type": "string", "minLength": 1},
+        "runtimePath": {"type": "string", "minLength": 1},
+        "securityPath": {"type": "string", "minLength": 1},
+        "testingPath": {"type": "string", "minLength": 1},
+        "permissionsPath": {"type": "string", "minLength": 1},
+        "apiPath": {"type": "string", "minLength": 1},
+        "marketplacePath": {"type": "string", "minLength": 1}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "support"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["host-rendered-json", "remote-ui-contract", "sandboxed-webview", "signed-native-bundle"]
+        },
+        "support": {"type": "string", "enum": ["supported", "planned", "future"]},
+        "sandbox": {"type": "string"},
+        "entry": {"type": "string"}
+      }
+    },
+    "shell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["standard", "editor", "dashboard", "chat", "media-player", "map", "secure", "game", "immersive"]
+        }
       }
     },
     "entry": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "route"],
       "properties": {
-        "type": {"type": "string", "enum": ["host-rendered", "package-rendered", "modula-ui-contract"]},
+        "type": {"type": "string", "enum": ["host-rendered", "modula-ui-contract", "package-rendered", "host-rendered-json", "remote-ui-contract", "sandboxed-webview", "signed-native-bundle"]},
         "route": {"type": "string", "minLength": 1},
         "component": {"type": "string", "minLength": 1}
       }
@@ -80,33 +127,147 @@
     "ownerTypes": {
       "type": "array",
       "minItems": 1,
-      "items": {"type": "string", "enum": ["user", "team", "business"]}
+      "items": {"type": "string", "enum": ["user", "team", "business", "community", "project"]}
     },
-    "permissions": {"$ref": "module.permissions.schema.json"},
     "surfaces": {
-      "oneOf": [
-        {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "board",
+          "route",
+          "profile",
+          "settings",
+          "marketplace",
+          "composer",
+          "chat",
+          "notification",
+          "sidebar",
+          "bottom-bar",
+          "floating-player",
+          "share-sheet",
+          "team",
+          "business",
+          "secure-settings"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "navigation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["routes"],
+      "properties": {
+        "routes": {
           "type": "array",
-          "items": {"type": "string", "enum": ["board", "profile", "settings", "route", "search", "event", "marketplace"]},
-          "uniqueItems": true
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "path", "title", "surface"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "path": {"type": "string", "minLength": 1},
+              "title": {"type": "string", "minLength": 1},
+              "surface": {"type": "string"}
+            }
+          }
         },
-        {
+        "bottomBar": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["board", "profile", "settings"],
+          "required": ["mode", "items"],
           "properties": {
-            "board": {"type": "boolean"},
-            "profile": {"type": "boolean"},
-            "settings": {"type": "boolean"}
+            "mode": {"type": "string", "enum": ["inherit", "module-owned"]},
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "label", "icon", "route"],
+                "properties": {
+                  "id": {"type": "string"},
+                  "label": {"type": "string"},
+                  "icon": {"type": "string"},
+                  "route": {"type": "string"}
+                }
+              }
+            }
           }
         }
-      ]
+      }
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["type", "schemaVersion", "entry", "usesDesignStandard", "supportsSurfaceTypes", "supportsTextScale", "supportsReduceMotion"],
+      "properties": {
+        "type": {"type": "string", "enum": ["host-rendered", "modula-ui-contract", "package-rendered"]},
+        "schemaVersion": {"type": "string"},
+        "entry": {"type": "string", "minLength": 1},
+        "usesDesignStandard": {"type": "boolean"},
+        "supportsSurfaceTypes": {"type": "boolean"},
+        "supportsTextScale": {"type": "boolean"},
+        "supportsReduceMotion": {"type": "boolean"}
+      }
+    },
+    "uiPackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entry", "screens"],
+      "properties": {
+        "entry": {"type": "string", "minLength": 1},
+        "screens": {"type": "object", "additionalProperties": {"type": "string"}},
+        "components": {"type": "object", "additionalProperties": {"type": "string"}},
+        "theme": {"type": "string"},
+        "animations": {"type": "string"}
+      }
+    },
+    "permissions": {"$ref": "module.permissions.schema.json"},
+    "hooks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "board.quickActions",
+          "board.widgets",
+          "profile.workspace",
+          "composer.actions",
+          "chat.header",
+          "chat.composer",
+          "settings.sections",
+          "share.actions",
+          "notification.actions"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "module.installed",
+          "module.updated",
+          "module.disabled",
+          "module.enabled",
+          "module.uninstalled",
+          "note.created",
+          "task.completed",
+          "identity.switched"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "actions": {
+      "type": "array",
+      "items": {"$ref": "module.actions.schema.json"}
     },
     "capabilities": {
       "type": "array",
       "items": {"type": "string", "minLength": 1},
       "uniqueItems": true
     },
+    "data": {"$ref": "module.data.schema.json"},
     "lifecycle": {
       "type": "object",
       "additionalProperties": false,
@@ -131,31 +292,8 @@
         "hostRendered": {"type": "boolean"}
       }
     },
-    "data": {"$ref": "module.data.schema.json"},
-    "ui": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "usesDesignStandard",
-        "supportsSurfaceTypes",
-        "supportsTextScale",
-        "supportsReduceMotion"
-      ],
-      "properties": {
-        "type": {"type": "string", "enum": ["host-rendered", "modula-ui-contract", "package-rendered"]},
-        "schemaVersion": {"type": "string"},
-        "entry": {"type": "string", "minLength": 1},
-        "usesDesignStandard": {"type": "boolean"},
-        "supportsSurfaceTypes": {"type": "boolean"},
-        "supportsTextScale": {"type": "boolean"},
-        "supportsReduceMotion": {"type": "boolean"}
-      }
-    },
     "minimumModulaVersion": {"type": "string"},
-    "changelog": {
-      "type": "array",
-      "items": {"$ref": "module.version.schema.json"}
-    },
+    "readme": {"type": "string"},
     "changelogSource": {
       "type": "object",
       "additionalProperties": false,
@@ -163,6 +301,25 @@
       "properties": {
         "type": {"type": "string", "enum": ["github"]},
         "path": {"type": "string", "minLength": 1}
+      }
+    },
+    "changelog": {
+      "type": "array",
+      "items": {"$ref": "module.version.schema.json"}
+    },
+    "assets": {"type": "object", "additionalProperties": true},
+    "screenshots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "path"],
+        "properties": {
+          "title": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "minLength": 1},
+          "description": {"type": "string"},
+          "surface": {"type": "string"}
+        }
       }
     },
     "integrity": {

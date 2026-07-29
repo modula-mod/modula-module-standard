@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import {mkdir, readFile, writeFile} from 'node:fs/promises'
-import {dirname, join} from 'node:path'
+import {dirname, isAbsolute, join} from 'node:path'
 import {pathToFileURL} from 'node:url'
 import {
   DEFAULT_LIFECYCLE_TRANSITIONS,
@@ -34,6 +34,8 @@ The standalone binary also accepts the same commands without the "module" prefix
   modula-module validate <manifest.json>
 `
 
+const userCwd = process.env.INIT_CWD ?? process.cwd()
+
 export async function run(rawArgs: string[]): Promise<CommandResult> {
   const args = normalizeArgs(rawArgs)
   const [command, first, second] = args
@@ -63,7 +65,7 @@ function normalizeArgs(args: string[]): string[] {
 }
 
 async function createCommand(args: string[]): Promise<CommandResult> {
-  const directory = args[0]
+  const directory = args[0] ? resolveUserPath(args[0]) : undefined
   if (!directory) return {exitCode: 1, stderr: 'Missing directory. Usage: modula module create <directory> --id <module-id> --name <name>\n'}
   const moduleId = flagValue(args, '--id') ?? 'com.example.module'
   const name = flagValue(args, '--name') ?? 'Example Module'
@@ -231,8 +233,12 @@ ${formatIssues(result.issues)}
 
 async function readManifestArg(path: string | undefined): Promise<unknown> {
   if (!path) throw new Error('Missing manifest path')
-  const text = await readFile(path, 'utf8')
+  const text = await readFile(resolveUserPath(path), 'utf8')
   return JSON.parse(text) as unknown
+}
+
+function resolveUserPath(path: string): string {
+  return isAbsolute(path) ? path : join(userCwd, path)
 }
 
 async function writeJson(path: string, value: unknown) {

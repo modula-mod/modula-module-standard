@@ -22,8 +22,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@modula/module-sdk": "workspace:*",
-    "@modula/module-testing": "workspace:*",
-    "@modula/module-validator": "workspace:*"
+    "@modula/module-sdk": "file:../module-sdk",
+    "@modula/module-testing": "file:../module-testing",
+    "@modula/module-validator": "file:../module-validator"
   }
 }

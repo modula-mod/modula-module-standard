@@ -18,28 +18,28 @@ importers:
   packages/create-module:
     dependencies:
       '@modula/module-sdk':
-        specifier: workspace:*
+        specifier: file:../module-sdk
         version: link:../module-sdk
       '@modula/module-testing':
-        specifier: workspace:*
+        specifier: file:../module-testing
         version: link:../module-testing
       '@modula/module-validator':
-        specifier: workspace:*
+        specifier: file:../module-validator
         version: link:../module-validator
 
   packages/module-fixtures:
     dependencies:
       '@modula/module-standard':
-        specifier: workspace:*
+        specifier: file:../module-standard
         version: link:../module-standard
 
   packages/module-sdk:
     dependencies:
       '@modula/module-standard':
-        specifier: workspace:*
+        specifier: file:../module-standard
         version: link:../module-standard
       '@modula/module-validator':
-        specifier: workspace:*
+        specifier: file:../module-validator
         version: link:../module-validator
 
   packages/module-standard: {}
@@ -47,16 +47,16 @@ importers:
   packages/module-testing:
     dependencies:
       '@modula/module-standard':
-        specifier: workspace:*
+        specifier: file:../module-standard
         version: link:../module-standard
       '@modula/module-validator':
-        specifier: workspace:*
+        specifier: file:../module-validator
         version: link:../module-validator
 
   packages/module-validator:
     dependencies:
       '@modula/module-standard':
-        specifier: workspace:*
+        specifier: file:../module-standard
         version: link:../module-standard
 
 packages:

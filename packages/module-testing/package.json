@@ -19,7 +19,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@modula/module-standard": "workspace:*",
-    "@modula/module-validator": "workspace:*"
+    "@modula/module-standard": "file:../module-standard",
+    "@modula/module-validator": "file:../module-validator"
   }
 }

@@ -19,3 +19,16 @@ Standard 1.0 requires:
 ```
 
 Data schema changes use module migrations. Manifest schema changes do not automatically imply data migrations.
+
+Standard 1.1.0 is additive:
+
+```json
+{
+  "standardVersion": "1.1.0",
+  "moduleVersion": "1.0.0",
+  "manifestSchemaVersion": "1.1.0",
+  "dataSchemaVersion": "1.0.0"
+}
+```
+
+Standard 1.0 modules remain valid. A manifest that omits `backend` is interpreted as `greenfield-managed`; `module-managed` and `hybrid` backend declarations require Standard 1.1.0.

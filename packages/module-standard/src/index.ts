@@ -1,9 +1,12 @@
 import {createHash} from 'node:crypto'
 
-export const MODULA_MODULE_STANDARD_VERSION = '1.0.0' as const
-export const MODULA_MANIFEST_SCHEMA_VERSION = '1.0.0' as const
+export const MODULA_MODULE_STANDARD_VERSION = '1.1.0' as const
+export const MODULA_MANIFEST_SCHEMA_VERSION = '1.1.0' as const
 export const MODULA_DATA_SCHEMA_VERSION = '1.0.0' as const
-export const MODULA_MODULE_STANDARD_SCHEMA_URI = 'https://modula.digital/schemas/module-standard/1.0.0/manifest.schema.json' as const
+export const MODULA_MODULE_STANDARD_SCHEMA_URI = 'https://modula.digital/schemas/module-standard/1.1.0/manifest.schema.json' as const
+export const MODULA_MODULE_STANDARD_PREVIOUS_VERSION = '1.0.0' as const
+export const MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION = '1.0.0' as const
+export const MODULA_MODULE_BACKEND_PROTOCOL_VERSION = '1.0.0' as const
 
 export type JsonPrimitive = string | number | boolean | null
 export type JsonValue = JsonPrimitive | JsonObject | JsonValue[]
@@ -19,6 +22,25 @@ export type ModulaReleaseChannel = 'dev' | 'alpha' | 'beta' | 'stable' | 'lts'
 export type ModulaHealthState = 'healthy' | 'degraded' | 'failed' | 'disabled' | 'quarantined'
 export type ModulaLifecycleState = 'discovered' | 'installed' | 'enabled' | 'disabled' | 'updating' | 'failed' | 'quarantined' | 'uninstalled'
 export type ModulaExecutionMode = 'declarative' | 'built-in' | 'hosted' | 'remote-http'
+export type ModulaBackendMode = 'greenfield-managed' | 'module-managed' | 'hybrid' | 'frontend-only'
+export type ModulaBackendLifecycleState =
+  | 'unconfigured'
+  | 'discovering'
+  | 'verifying'
+  | 'available'
+  | 'degraded'
+  | 'unreachable'
+  | 'incompatible'
+  | 'revoked'
+  | 'quarantined'
+  | 'disabled'
+export type ModulaBackendDeploymentOwnership = 'publisher-hosted' | 'modula-hosted' | 'customer-hosted' | 'local-development'
+export type ModulaBackendCapabilityProvider = 'greenfield' | 'module-backend' | 'external-connector' | 'local'
+export type ModulaBackendDataStore = 'greenfield' | 'module-backend' | 'device' | 'mixed'
+export type ModulaBackendDataClassification = 'public' | 'internal' | 'private' | 'sensitive' | 'restricted'
+export type ModulaBackendBackupResponsibility = 'greenfield' | 'publisher' | 'customer' | 'shared'
+export type ModulaBackendActionSideEffect = 'none' | 'internal-write' | 'external-write' | 'financial' | 'destructive'
+export type ModulaBackendActionConfirmation = 'none' | 'user' | 'reauthentication' | 'operator'
 export type ModulaCapabilityId =
   | 'records'
   | 'views'
@@ -35,6 +57,7 @@ export type ModulaCapabilityId =
   | 'health'
   | 'migrations'
   | 'connectors'
+  | 'module-backend'
 
 export type Publisher = {
   id: string
@@ -83,6 +106,222 @@ export type Capability = {
   required: boolean
   reason: string
   degradedBehavior?: string
+}
+
+export type ModuleSigningKeyReference = {
+  keyId: string
+  algorithm: 'Ed25519' | 'ES256' | 'RS256'
+  publicKeyRef?: string
+  jwksUrl?: string
+}
+
+export type ModuleBackendEndpointDefinition = {
+  baseUrlStrategy: 'registry' | 'installation' | 'self-hosted' | 'user-configured'
+  apiVersion: string
+  discoveryPath?: string
+  healthPath: string
+  capabilitiesPath?: string
+  actionsPath?: string
+  eventsPath?: string
+  webhooksPath?: string
+  allowedHosts?: string[]
+}
+
+export type ModuleBackendAuthenticationDefinition = {
+  strategy: 'greenfield-signed-jwt' | 'oauth-token-exchange' | 'hmac-signed-request'
+  tokenExchangeRequired: boolean
+  sessionExchangePath?: string
+  audience?: string
+  tokenTtlSeconds?: number
+  signingAlg?: 'EdDSA' | 'ES256' | 'RS256'
+  requiredClaims?: string[]
+}
+
+export type ModuleBackendHealthDefinition = {
+  path?: string
+  intervalSeconds?: number
+  timeoutMs?: number
+  degradedAfterFailures?: number
+  unavailableAfterFailures?: number
+  components?: Array<
+    | 'discovery'
+    | 'identity'
+    | 'tls'
+    | 'protocol'
+    | 'authentication'
+    | 'api'
+    | 'database'
+    | 'queue'
+    | 'events'
+    | 'webhooks'
+    | 'search'
+    | 'storage'
+  >
+}
+
+export type ModuleBackendEventBridgeDefinition = {
+  incoming?: string[]
+  outgoing?: string[]
+  signatureRequired?: boolean
+  replayWindowSeconds?: number
+  deadLetterSupported?: boolean
+}
+
+export type ModuleWebhookSubscription = {
+  id: string
+  eventType: string
+  path: string
+  signature: 'hmac-sha256' | 'ed25519'
+  replayProtection: boolean
+}
+
+export type ModuleWebhookPublication = {
+  id: string
+  eventType: string
+  target: 'greenfield' | 'module-backend' | 'external-connector'
+  signature: 'hmac-sha256' | 'ed25519'
+  retryPolicy: {
+    maxAttempts: number
+    backoffSeconds: number
+  }
+}
+
+export type ModuleBackendWebhookDefinition = {
+  incoming: ModuleWebhookSubscription[]
+  outgoing: ModuleWebhookPublication[]
+}
+
+export type ModuleDataCategory = {
+  id: string
+  description: string
+  location: 'greenfield' | 'module-backend' | 'device'
+  classification: ModulaBackendDataClassification
+  exportable: boolean
+  deletable: boolean
+}
+
+export type ModuleBackendDataDefinition = {
+  primaryStore: ModulaBackendDataStore
+  categories: ModuleDataCategory[]
+  exportSupported: boolean
+  deletionSupported: boolean
+  retentionPolicy?: string
+  backupResponsibility: ModulaBackendBackupResponsibility
+  residency?: string[]
+}
+
+export type ModuleBackendDeploymentDefinition = {
+  ownership: ModulaBackendDeploymentOwnership
+  multiTenant: boolean
+  regions?: string[]
+  dataResidency?: string[]
+  selfHostingSupported: boolean
+}
+
+export type ModuleBackendTrustDefinition = {
+  publisherId: string
+  deploymentIdentity?: string
+  allowedOrigins: string[]
+  certificatePins?: string[]
+  signingKeys?: ModuleSigningKeyReference[]
+  attestation?: {
+    required: boolean
+    provider?: string
+  }
+  releaseChecksum?: string
+  backendBuildChecksum?: string
+}
+
+export type ModuleBackendNetworkPolicy = {
+  allowLocalhost?: boolean
+  allowPrivateNetwork?: boolean
+  allowedPorts?: number[]
+  blockedCidrs?: string[]
+  denyMetadataEndpoints?: boolean
+  followRedirects?: boolean
+}
+
+export type ModuleBackendLifecycleDefinition = {
+  initialState?: ModulaBackendLifecycleState
+  supportedStates?: ModulaBackendLifecycleState[]
+  reverifyOnEndpointChange?: boolean
+  disableOnQuarantine?: boolean
+}
+
+export type ModuleBackendActionDefinition = {
+  actionId: string
+  method: 'POST'
+  path: string
+  inputSchema: string
+  outputSchema: string
+  permissions: string[]
+  idempotent: boolean
+  sideEffects: ModulaBackendActionSideEffect
+  confirmation: ModulaBackendActionConfirmation
+  timeoutMs: number
+}
+
+export type ModuleBackendClientAccessDefinition = {
+  allowed: boolean
+  protocols: Array<'https' | 'wss'>
+  tokenExchangeRequired: boolean
+  allowedOrigins: string[]
+  maxSessionSeconds: number
+}
+
+export type ModuleBackendDefinition = {
+  mode: ModulaBackendMode
+  protocolVersion?: string
+  endpoints?: ModuleBackendEndpointDefinition
+  authentication?: ModuleBackendAuthenticationDefinition
+  health?: ModuleBackendHealthDefinition
+  events?: ModuleBackendEventBridgeDefinition
+  webhooks?: ModuleBackendWebhookDefinition
+  data?: ModuleBackendDataDefinition
+  deployment?: ModuleBackendDeploymentDefinition
+  trust?: ModuleBackendTrustDefinition
+  network?: ModuleBackendNetworkPolicy
+  lifecycle?: ModuleBackendLifecycleDefinition
+  actions?: ModuleBackendActionDefinition[]
+  clientAccess?: ModuleBackendClientAccessDefinition
+}
+
+export type ResolvedModuleCapability = {
+  capability: string
+  available: boolean
+  granted: boolean
+  provider: ModulaBackendCapabilityProvider
+  reason?: string
+}
+
+export type ModuleSessionClaims = {
+  issuer: string
+  audience: string
+  subject: string
+  accountId: string
+  actorId: string
+  installationId: string
+  moduleId: string
+  permissions: string[]
+  capabilities: string[]
+  sessionId: string
+  issuedAt: number
+  expiresAt: number
+  requestId?: string
+}
+
+export type ModuleBackendDiscovery = {
+  moduleId: string
+  moduleVersion: string
+  standardVersion: string
+  protocolVersion: string
+  capabilities: string[]
+  supportedActions: string[]
+  supportedEvents: string[]
+  healthUrl: string
+  documentationUrl?: string
+  deploymentId?: string
+  region?: string
 }
 
 export type RecordOwnership = 'account' | 'profile' | 'team' | 'system'
@@ -353,6 +592,7 @@ export type ModulaModuleManifest = {
   migrations: MigrationDefinitions
   release: ReleaseMetadata
   trust: TrustMetadata
+  backend?: ModuleBackendDefinition
 }
 
 export type HostCapability = {

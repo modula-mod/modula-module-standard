@@ -1,5 +1,5 @@
 {
-  "name": "@modula/module-sdk",
+  "name": "@modula/module-backend-testing",
   "version": "1.1.0",
   "private": false,
   "type": "module",
@@ -19,7 +19,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@modula/module-standard": "file:../module-standard",
-    "@modula/module-validator": "file:../module-validator"
+    "@modula/module-backend-protocol": "file:../module-backend-protocol"
   }
 }

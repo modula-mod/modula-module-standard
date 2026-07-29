@@ -1,5 +1,5 @@
 {
-  "name": "@modula/module-sdk",
+  "name": "@modula/module-backend-protocol",
   "version": "1.1.0",
   "private": false,
   "type": "module",
@@ -17,9 +17,5 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
-  },
-  "dependencies": {
-    "@modula/module-standard": "file:../module-standard",
-    "@modula/module-validator": "file:../module-validator"
   }
 }

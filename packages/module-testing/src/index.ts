@@ -35,6 +35,13 @@ export type ModuleSandbox = {
     sensitiveFields: string[]
   }>
   inspectDiagnostics(manifest: ModulaModuleManifest): ModulaModuleManifest['diagnostics']
+  inspectBackend(manifest: ModulaModuleManifest): {
+    mode: NonNullable<ModulaModuleManifest['backend']>['mode']
+    protocolVersion: string
+    primaryStore: string
+    deploymentOwnership: string
+    clientAccessAllowed: boolean
+  }
   previewHealth(manifest: ModulaModuleManifest): ModulaModuleManifest['health']
   runMigrations(manifest: ModulaModuleManifest, fromVersion: string): {
     targetVersion: string
@@ -107,6 +114,15 @@ export function createModuleSandbox(options: ModuleSandboxOptions = {}): ModuleS
     inspectDiagnostics(manifest) {
       return manifest.diagnostics
     },
+    inspectBackend(manifest) {
+      return {
+        mode: manifest.backend?.mode ?? 'greenfield-managed',
+        protocolVersion: manifest.backend?.protocolVersion ?? 'greenfield',
+        primaryStore: manifest.backend?.data?.primaryStore ?? 'greenfield',
+        deploymentOwnership: manifest.backend?.deployment?.ownership ?? 'modula-hosted',
+        clientAccessAllowed: manifest.backend?.clientAccess?.allowed ?? false,
+      }
+    },
     previewHealth(manifest) {
       return manifest.health
     },
@@ -134,6 +150,7 @@ export function runModuleStandardTestPlan(manifest: unknown, options: ModuleSand
     events: sandbox.inspectEvents(validation.manifest),
     search: sandbox.inspectSearch(validation.manifest),
     diagnostics: sandbox.inspectDiagnostics(validation.manifest),
+    backend: sandbox.inspectBackend(validation.manifest),
     health: sandbox.previewHealth(validation.manifest),
     migrations: sandbox.runMigrations(validation.manifest, '0.0.0'),
   }

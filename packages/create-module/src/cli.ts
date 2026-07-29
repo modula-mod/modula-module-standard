@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {get} from 'node:https'
 import {mkdir, readFile, writeFile} from 'node:fs/promises'
 import {dirname, isAbsolute, join} from 'node:path'
 import {pathToFileURL} from 'node:url'
@@ -29,6 +30,11 @@ Usage:
   modula module diff <old-manifest.json> <new-manifest.json>
   modula module migrate <manifest.json> --from <data-schema-version>
   modula module upgrade-standard <manifest.json>
+  modula module backend validate <manifest.json>
+  modula module backend discover <manifest.json> [--origin <https-origin>]
+  modula module backend health <manifest.json> [--origin <https-origin>]
+  modula module backend test <manifest.json>
+  modula module backend mock <directory>
 
 The standalone binary also accepts the same commands without the "module" prefix:
   modula-module validate <manifest.json>
@@ -52,6 +58,7 @@ export async function run(rawArgs: string[]): Promise<CommandResult> {
     if (command === 'diff') return diffCommand(first, second)
     if (command === 'migrate') return migrateCommand(args.slice(1))
     if (command === 'upgrade-standard') return upgradeStandardCommand(first)
+    if (command === 'backend') return backendCommand(args.slice(1))
     return {exitCode: 1, stderr: `Unknown command: ${rawArgs.join(' ')}\n\n${HELP_TEXT}`}
   } catch (error) {
     return {exitCode: 1, stderr: `${formatError(error)}\n`}
@@ -231,6 +238,122 @@ ${formatIssues(result.issues)}
   }
 }
 
+async function backendCommand(args: string[]): Promise<CommandResult> {
+  const [command, first] = args
+  if (command === 'validate') return backendValidateCommand(first)
+  if (command === 'discover') return backendDiscoverCommand(first, flagValue(args, '--origin'))
+  if (command === 'health') return backendHealthCommand(first, flagValue(args, '--origin'))
+  if (command === 'test') return backendTestCommand(first)
+  if (command === 'mock') return backendMockCommand(first)
+  return {exitCode: 1, stderr: `Unknown backend command: ${command ?? ''}\n\n${HELP_TEXT}`}
+}
+
+async function backendValidateCommand(manifestPath: string | undefined): Promise<CommandResult> {
+  const manifest = await readManifestArg(manifestPath)
+  const result = validateModulaModuleManifest(manifest)
+  if (!result.valid || !result.manifest) {
+    return {exitCode: 1, stderr: `Invalid module backend declaration: ${manifestPath}\n${formatIssues(result.issues)}\n`}
+  }
+  const backend = result.manifest.backend
+  return ok(`Valid module backend declaration
+  mode: ${backend?.mode ?? 'greenfield-managed'}
+  protocolVersion: ${backend?.protocolVersion ?? 'greenfield'}
+  dataLocation: ${backend?.data?.primaryStore ?? 'greenfield'}
+  deployment: ${backend?.deployment?.ownership ?? 'modula-hosted'}
+  clientAccess: ${backend?.clientAccess?.allowed ? 'allowed' : 'not allowed'}
+`)
+}
+
+async function backendDiscoverCommand(manifestPath: string | undefined, explicitOrigin: string | undefined): Promise<CommandResult> {
+  const manifest = await requireValidBackendManifest(manifestPath)
+  const discoveryUrl = resolveBackendUrl(manifest, explicitOrigin, manifest.backend?.endpoints?.discoveryPath ?? '/.well-known/modula-module')
+  const discovery = await readHttpsJson(discoveryUrl)
+  return ok(`Module backend discovery
+  url: ${discoveryUrl}
+  moduleId: ${String((discovery as any).moduleId ?? '')}
+  standardVersion: ${String((discovery as any).standardVersion ?? '')}
+  protocolVersion: ${String((discovery as any).protocolVersion ?? '')}
+  capabilities: ${Array.isArray((discovery as any).capabilities) ? (discovery as any).capabilities.length : 0}
+`)
+}
+
+async function backendHealthCommand(manifestPath: string | undefined, explicitOrigin: string | undefined): Promise<CommandResult> {
+  const manifest = await requireValidBackendManifest(manifestPath)
+  const healthUrl = resolveBackendUrl(manifest, explicitOrigin, manifest.backend?.endpoints?.healthPath ?? '/v1/health')
+  const health = await readHttpsJson(healthUrl)
+  return ok(`Module backend health
+  url: ${healthUrl}
+  status: ${String((health as any).status ?? (health as any).overall ?? 'unknown')}
+`)
+}
+
+async function backendTestCommand(manifestPath: string | undefined): Promise<CommandResult> {
+  const manifest = await readManifestArg(manifestPath)
+  const result = runModuleStandardTestPlan(manifest)
+  if (!result.valid || !result.backend) return {exitCode: 1, stderr: `Module backend conformance preflight failed\n${formatIssues(result.validation.issues)}\n`}
+  return ok(`Module backend conformance preflight passed
+  mode: ${result.backend.mode}
+  protocolVersion: ${result.backend.protocolVersion}
+  primaryStore: ${result.backend.primaryStore}
+  deployment: ${result.backend.deploymentOwnership}
+`)
+}
+
+async function backendMockCommand(directory: string | undefined): Promise<CommandResult> {
+  const target = directory ? resolveUserPath(directory) : undefined
+  if (!target) return {exitCode: 1, stderr: 'Missing directory. Usage: modula module backend mock <directory>\n'}
+  await mkdir(target, {recursive: true})
+  await writeFile(join(target, 'server.mjs'), REFERENCE_BACKEND_MOCK)
+  return ok(`Created module backend mock
+  directory: ${target}
+  entry: ${join(target, 'server.mjs')}
+`)
+}
+
+async function requireValidBackendManifest(manifestPath: string | undefined): Promise<ModulaModuleManifest> {
+  const manifest = await readManifestArg(manifestPath)
+  const result = validateModulaModuleManifest(manifest)
+  if (!result.valid || !result.manifest) throw new Error(`Invalid manifest:\n${formatIssues(result.issues)}`)
+  if (!result.manifest.backend || result.manifest.backend.mode === 'greenfield-managed' || result.manifest.backend.mode === 'frontend-only') {
+    throw new Error('Backend discovery requires a module-managed or hybrid backend declaration')
+  }
+  return result.manifest
+}
+
+function resolveBackendUrl(manifest: ModulaModuleManifest, explicitOrigin: string | undefined, path: string): string {
+  const origin = explicitOrigin ?? manifest.backend?.trust?.allowedOrigins?.[0]
+  if (!origin) throw new Error('No backend origin available. Provide --origin or backend.trust.allowedOrigins[0].')
+  const url = new URL(path, origin)
+  if (url.protocol !== 'https:') throw new Error('Module backend URL must use https')
+  return url.toString()
+}
+
+async function readHttpsJson(url: string): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    get(url, {timeout: 10_000, headers: {'accept': 'application/json'}}, response => {
+      let body = ''
+      response.setEncoding('utf8')
+      response.on('data', chunk => {
+        body += chunk
+        if (body.length > 1_000_000) {
+          response.destroy(new Error('Backend response exceeded 1MB'))
+        }
+      })
+      response.on('end', () => {
+        if ((response.statusCode ?? 500) < 200 || (response.statusCode ?? 500) >= 300) {
+          reject(new Error(`Backend request failed with HTTP ${response.statusCode ?? 0}`))
+          return
+        }
+        try {
+          resolve(JSON.parse(body))
+        } catch (error) {
+          reject(error)
+        }
+      })
+    }).on('error', reject)
+  })
+}
+
 async function readManifestArg(path: string | undefined): Promise<unknown> {
   if (!path) throw new Error('Missing manifest path')
   const text = await readFile(resolveUserPath(path), 'utf8')
@@ -251,10 +374,10 @@ function createTemplateManifest(moduleId: string, slug: string, name: string): M
   const recordId = `${moduleId}.record.item`
   const functionId = `${moduleId}.function.create-item`
   return {
-    schemaVersion: '1.0.0',
-    standardVersion: '1.0.0',
+    schemaVersion: '1.1.0',
+    standardVersion: '1.1.0',
     moduleVersion: '1.0.0',
-    manifestSchemaVersion: '1.0.0',
+    manifestSchemaVersion: '1.1.0',
     dataSchemaVersion: '1.0.0',
     id: moduleId,
     slug,
@@ -296,6 +419,7 @@ function createTemplateManifest(moduleId: string, slug: string, name: string): M
     migrations: {dataSchemaVersion: '1.0.0', steps: [{id: `${moduleId}.migration.1-0-0`, from: '0.0.0', to: '1.0.0', reversible: true, checksum: '1'.repeat(64)}]},
     release: {repository: `modula-mod/${slug}`, commitSha: '0123456789abcdef0123456789abcdef01234567', checksum: '2'.repeat(64), licenseEvidence: ['LICENSE'], signing: {signed: false}, channel: 'dev', reviewStatus: 'unreviewed', securityAdvisories: []},
     trust: {publisher, level: 'untrusted', provenance: {sourceVerified: false, checksumVerified: false, signatureVerified: false}, review: {status: 'unreviewed', evidence: []}, security: {advisories: []}},
+    backend: {mode: 'greenfield-managed'},
   }
 }
 
@@ -324,6 +448,36 @@ function formatError(error: unknown): string {
   if (error instanceof Error) return error.message
   return String(error)
 }
+
+const REFERENCE_BACKEND_MOCK = `import {createServer} from 'node:http'
+
+const discovery = {
+  moduleId: 'com.example.module',
+  moduleVersion: '1.0.0',
+  standardVersion: '1.1.0',
+  protocolVersion: '1.0.0',
+  capabilities: ['actions', 'events', 'health'],
+  supportedActions: ['com.example.module.action.read', 'com.example.module.action.write'],
+  supportedEvents: ['module.com.example.module.item.created'],
+  healthUrl: 'http://localhost:8787/v1/health',
+  deploymentId: 'local-reference',
+  region: 'local',
+}
+
+const server = createServer((request, response) => {
+  response.setHeader('content-type', 'application/json')
+  if (request.url === '/.well-known/modula-module') return response.end(JSON.stringify(discovery))
+  if (request.url === '/v1/health') return response.end(JSON.stringify({status: 'healthy', components: [{id: 'api', status: 'healthy'}]}))
+  if (request.url === '/v1/capabilities') return response.end(JSON.stringify({capabilities: discovery.capabilities}))
+  if (request.url?.startsWith('/v1/actions/')) return response.end(JSON.stringify({ok: true, idempotent: true, result: {handled: true}}))
+  response.statusCode = 404
+  response.end(JSON.stringify({error: 'not_found'}))
+})
+
+server.listen(8787, () => {
+  console.log('Reference Modula module backend mock listening on http://localhost:8787')
+})
+`
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const result = await run(process.argv.slice(2))

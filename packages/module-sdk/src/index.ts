@@ -14,6 +14,13 @@ import {
   type JsonObject,
   type JsonSchema,
   type Lifecycle,
+  type ModuleBackendActionDefinition,
+  type ModuleBackendClientAccessDefinition,
+  type ModuleBackendDataDefinition,
+  type ModuleBackendDefinition,
+  type ModuleBackendDeploymentDefinition,
+  type ModuleBackendEndpointDefinition,
+  type ModuleBackendTrustDefinition,
   type ModulaModuleManifest,
   type Permission,
   type Publisher,
@@ -67,6 +74,99 @@ export function definePermission(id: string, reason: string, overrides: Partial<
 
 export function defineCapability(id: Capability['id'], reason: string, required = true, degradedBehavior?: string): Capability {
   return {id, reason, required, degradedBehavior}
+}
+
+export function defineModuleBackend(mode: ModuleBackendDefinition['mode'], overrides: Partial<ModuleBackendDefinition> = {}): ModuleBackendDefinition {
+  return {
+    mode,
+    protocolVersion: overrides.protocolVersion ?? (mode === 'module-managed' || mode === 'hybrid' ? '1.0.0' : undefined),
+    endpoints: overrides.endpoints,
+    authentication: overrides.authentication,
+    health: overrides.health,
+    events: overrides.events,
+    webhooks: overrides.webhooks,
+    data: overrides.data,
+    deployment: overrides.deployment,
+    trust: overrides.trust,
+    network: overrides.network,
+    lifecycle: overrides.lifecycle,
+    actions: overrides.actions,
+    clientAccess: overrides.clientAccess,
+  }
+}
+
+export function defineModuleBackendEndpoints(overrides: Partial<ModuleBackendEndpointDefinition> = {}): ModuleBackendEndpointDefinition {
+  return {
+    baseUrlStrategy: overrides.baseUrlStrategy ?? 'registry',
+    apiVersion: overrides.apiVersion ?? '1.0.0',
+    discoveryPath: overrides.discoveryPath ?? '/.well-known/modula-module',
+    healthPath: overrides.healthPath ?? '/v1/health',
+    capabilitiesPath: overrides.capabilitiesPath ?? '/v1/capabilities',
+    actionsPath: overrides.actionsPath ?? '/v1/actions',
+    eventsPath: overrides.eventsPath ?? '/v1/events',
+    webhooksPath: overrides.webhooksPath ?? '/v1/webhooks/modula',
+    allowedHosts: overrides.allowedHosts,
+  }
+}
+
+export function defineModuleBackendData(overrides: Partial<ModuleBackendDataDefinition> = {}): ModuleBackendDataDefinition {
+  return {
+    primaryStore: overrides.primaryStore ?? 'module-backend',
+    categories: overrides.categories ?? [],
+    exportSupported: overrides.exportSupported ?? false,
+    deletionSupported: overrides.deletionSupported ?? false,
+    retentionPolicy: overrides.retentionPolicy,
+    backupResponsibility: overrides.backupResponsibility ?? 'publisher',
+    residency: overrides.residency,
+  }
+}
+
+export function defineModuleBackendDeployment(overrides: Partial<ModuleBackendDeploymentDefinition> = {}): ModuleBackendDeploymentDefinition {
+  return {
+    ownership: overrides.ownership ?? 'publisher-hosted',
+    multiTenant: overrides.multiTenant ?? true,
+    regions: overrides.regions,
+    dataResidency: overrides.dataResidency,
+    selfHostingSupported: overrides.selfHostingSupported ?? false,
+  }
+}
+
+export function defineModuleBackendTrust(publisherId: string, allowedOrigins: string[], overrides: Partial<ModuleBackendTrustDefinition> = {}): ModuleBackendTrustDefinition {
+  return {
+    publisherId,
+    allowedOrigins,
+    deploymentIdentity: overrides.deploymentIdentity,
+    certificatePins: overrides.certificatePins,
+    signingKeys: overrides.signingKeys,
+    attestation: overrides.attestation,
+    releaseChecksum: overrides.releaseChecksum,
+    backendBuildChecksum: overrides.backendBuildChecksum,
+  }
+}
+
+export function defineModuleBackendAction(actionId: string, path: string, overrides: Partial<ModuleBackendActionDefinition> = {}): ModuleBackendActionDefinition {
+  return {
+    actionId,
+    method: 'POST',
+    path,
+    inputSchema: overrides.inputSchema ?? `${actionId}.input`,
+    outputSchema: overrides.outputSchema ?? `${actionId}.output`,
+    permissions: overrides.permissions ?? [],
+    idempotent: overrides.idempotent ?? true,
+    sideEffects: overrides.sideEffects ?? 'internal-write',
+    confirmation: overrides.confirmation ?? 'user',
+    timeoutMs: overrides.timeoutMs ?? 10000,
+  }
+}
+
+export function defineModuleBackendClientAccess(overrides: Partial<ModuleBackendClientAccessDefinition> = {}): ModuleBackendClientAccessDefinition {
+  return {
+    allowed: overrides.allowed ?? false,
+    protocols: overrides.protocols ?? ['https'],
+    tokenExchangeRequired: overrides.tokenExchangeRequired ?? true,
+    allowedOrigins: overrides.allowedOrigins ?? [],
+    maxSessionSeconds: overrides.maxSessionSeconds ?? 900,
+  }
 }
 
 export function defineLifecycle(overrides: Partial<Lifecycle> = {}): Lifecycle {

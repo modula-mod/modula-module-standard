@@ -27,6 +27,23 @@ importers:
         specifier: file:../module-validator
         version: link:../module-validator
 
+  packages/module-backend-fixtures:
+    dependencies:
+      '@modula/module-backend-protocol':
+        specifier: file:../module-backend-protocol
+        version: link:../module-backend-protocol
+      '@modula/module-standard':
+        specifier: file:../module-standard
+        version: link:../module-standard
+
+  packages/module-backend-protocol: {}
+
+  packages/module-backend-testing:
+    dependencies:
+      '@modula/module-backend-protocol':
+        specifier: file:../module-backend-protocol
+        version: link:../module-backend-protocol
+
   packages/module-fixtures:
     dependencies:
       '@modula/module-standard':

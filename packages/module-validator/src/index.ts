@@ -1,6 +1,9 @@
 import {
   MODULA_DATA_SCHEMA_VERSION,
   MODULA_MANIFEST_SCHEMA_VERSION,
+  MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION,
+  MODULA_MODULE_BACKEND_PROTOCOL_VERSION,
+  MODULA_MODULE_STANDARD_PREVIOUS_VERSION,
   MODULA_MODULE_STANDARD_VERSION,
   type ActionDefinitions,
   type AIIntegrationDefinitions,
@@ -14,6 +17,8 @@ import {
   type HostCapability,
   type HostCompatibility,
   type Lifecycle,
+  type ModulaBackendLifecycleState,
+  type ModulaBackendMode,
   type ModulaLifecycleState,
   type ModulaModuleManifest,
   type ModulaPlatform,
@@ -79,12 +84,37 @@ const ROOT_KEYS = new Set([
   'migrations',
   'release',
   'trust',
+  'backend',
 ])
 
 const PLATFORMS = new Set<ModulaPlatform>(['ios', 'android', 'web', 'server'])
+const SUPPORTED_STANDARD_VERSIONS = new Set<string>([MODULA_MODULE_STANDARD_PREVIOUS_VERSION, MODULA_MODULE_STANDARD_VERSION])
+const SUPPORTED_MANIFEST_SCHEMA_VERSIONS = new Set<string>([MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION, MODULA_MANIFEST_SCHEMA_VERSION])
 const HEALTH_STATES = new Set(['healthy', 'degraded', 'failed', 'disabled', 'quarantined'])
 const LIFECYCLE_STATES = new Set(['discovered', 'installed', 'enabled', 'disabled', 'updating', 'failed', 'quarantined', 'uninstalled'])
 const EXECUTION_MODES = new Set(['declarative', 'built-in', 'hosted', 'remote-http'])
+const BACKEND_MODES = new Set<ModulaBackendMode>(['greenfield-managed', 'module-managed', 'hybrid', 'frontend-only'])
+const BACKEND_ENDPOINT_STRATEGIES = new Set(['registry', 'installation', 'self-hosted', 'user-configured'])
+const BACKEND_AUTH_STRATEGIES = new Set(['greenfield-signed-jwt', 'oauth-token-exchange', 'hmac-signed-request'])
+const BACKEND_DEPLOYMENT_OWNERSHIP = new Set(['publisher-hosted', 'modula-hosted', 'customer-hosted', 'local-development'])
+const BACKEND_DATA_STORES = new Set(['greenfield', 'module-backend', 'device', 'mixed'])
+const BACKEND_DATA_CLASSIFICATIONS = new Set(['public', 'internal', 'private', 'sensitive', 'restricted'])
+const BACKEND_BACKUP_RESPONSIBILITY = new Set(['greenfield', 'publisher', 'customer', 'shared'])
+const BACKEND_LIFECYCLE_STATES = new Set<ModulaBackendLifecycleState>([
+  'unconfigured',
+  'discovering',
+  'verifying',
+  'available',
+  'degraded',
+  'unreachable',
+  'incompatible',
+  'revoked',
+  'quarantined',
+  'disabled',
+])
+const BACKEND_ACTION_SIDE_EFFECTS = new Set(['none', 'internal-write', 'external-write', 'financial', 'destructive'])
+const BACKEND_ACTION_CONFIRMATIONS = new Set(['none', 'user', 'reauthentication', 'operator'])
+const BACKEND_HEALTH_COMPONENTS = new Set(['discovery', 'identity', 'tls', 'protocol', 'authentication', 'api', 'database', 'queue', 'events', 'webhooks', 'search', 'storage'])
 const RISK_LEVELS = new Set(['low', 'medium', 'high', 'critical'])
 const POLICY_MODES = new Set(['observe', 'warn', 'require-confirmation', 'block'])
 const VIEW_TYPES = new Set(['collection', 'detail', 'form', 'dashboard', 'settings', 'empty-state', 'error-state', 'loading-state'])
@@ -111,6 +141,7 @@ const ALLOWED_CAPABILITIES = new Set([
   'health',
   'migrations',
   'connectors',
+  'module-backend',
 ])
 const HIGH_RISK_PERMISSION_PREFIXES = ['admin:', 'dimon:', 'wallet:', 'billing:', 'identity:', 'security:', 'medical:', 'legal:', 'finance:']
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i
@@ -181,6 +212,7 @@ export function validateModulaModuleManifest(input: unknown, options: ModulaModu
   validateMigrations(input.migrations, '$.migrations', add)
   validateRelease(input.release, '$.release', add)
   validateTrust(input.trust, '$.trust', input.publisher, add)
+  validateBackend(input.backend, '$.backend', input, add)
   validateProvenanceEvidence(input.release, options, add)
   validateIdUniqueness(input, add)
   validateCrossContracts(input, add)
@@ -207,15 +239,26 @@ export function validateModulaModuleManifest(input: unknown, options: ModulaModu
 export {isLifecycleTransitionAllowed, negotiateCapabilities, negotiateCompatibility}
 
 function validateVersionFields(input: Record<string, unknown>, add: AddIssue) {
-  const required = [
-    ['schemaVersion', MODULA_MANIFEST_SCHEMA_VERSION],
-    ['standardVersion', MODULA_MODULE_STANDARD_VERSION],
-    ['manifestSchemaVersion', MODULA_MANIFEST_SCHEMA_VERSION],
-    ['dataSchemaVersion', MODULA_DATA_SCHEMA_VERSION],
-  ] as const
-  for (const [field, expected] of required) {
+  for (const field of ['schemaVersion', 'standardVersion', 'manifestSchemaVersion', 'dataSchemaVersion'] as const) {
     if (!isSemver(input[field])) add(`$.${field}`, 'INVALID_SEMVER', `${field} must be semantic version`)
-    if (input[field] !== expected) add(`$.${field}`, 'UNSUPPORTED_VERSION', `${field} must be ${expected} for Module Standard 1.0`)
+  }
+  if (typeof input.standardVersion === 'string' && !SUPPORTED_STANDARD_VERSIONS.has(input.standardVersion)) {
+    add('$.standardVersion', 'UNSUPPORTED_VERSION', `standardVersion must be ${MODULA_MODULE_STANDARD_PREVIOUS_VERSION} or ${MODULA_MODULE_STANDARD_VERSION}`)
+  }
+  if (typeof input.schemaVersion === 'string' && !SUPPORTED_MANIFEST_SCHEMA_VERSIONS.has(input.schemaVersion)) {
+    add('$.schemaVersion', 'UNSUPPORTED_VERSION', `schemaVersion must be ${MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION} or ${MODULA_MANIFEST_SCHEMA_VERSION}`)
+  }
+  if (typeof input.manifestSchemaVersion === 'string' && !SUPPORTED_MANIFEST_SCHEMA_VERSIONS.has(input.manifestSchemaVersion)) {
+    add('$.manifestSchemaVersion', 'UNSUPPORTED_VERSION', `manifestSchemaVersion must be ${MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION} or ${MODULA_MANIFEST_SCHEMA_VERSION}`)
+  }
+  if (input.dataSchemaVersion !== MODULA_DATA_SCHEMA_VERSION) {
+    add('$.dataSchemaVersion', 'UNSUPPORTED_VERSION', `dataSchemaVersion must be ${MODULA_DATA_SCHEMA_VERSION}`)
+  }
+  if (input.standardVersion === MODULA_MODULE_STANDARD_PREVIOUS_VERSION && input.manifestSchemaVersion === MODULA_MANIFEST_SCHEMA_VERSION) {
+    add('$.manifestSchemaVersion', 'VERSION_MISMATCH', 'Standard 1.0 manifests must use manifestSchemaVersion 1.0.0')
+  }
+  if (input.standardVersion === MODULA_MODULE_STANDARD_VERSION && input.manifestSchemaVersion === MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION) {
+    add('$.manifestSchemaVersion', 'VERSION_MISMATCH', 'Standard 1.1 manifests must use manifestSchemaVersion 1.1.0')
   }
   if (!isSemver(input.moduleVersion)) add('$.moduleVersion', 'INVALID_SEMVER', 'moduleVersion must be semantic version')
 }
@@ -517,6 +560,384 @@ function validateTrust(value: unknown, path: string, publisher: unknown, add: Ad
   if (!isRecord(value.security)) add(`${path}.security`, 'MISSING_SECURITY', 'trust security metadata is required')
 }
 
+function validateBackend(value: unknown, path: string, manifest: Record<string, unknown>, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_BACKEND', 'backend must be an object when provided')
+    return
+  }
+  if (manifest.standardVersion === MODULA_MODULE_STANDARD_PREVIOUS_VERSION) {
+    add(path, 'BACKEND_REQUIRES_STANDARD_1_1', 'backend declarations require Modula Module Standard 1.1.0')
+  }
+  if (!BACKEND_MODES.has(value.mode as ModulaBackendMode)) {
+    add(`${path}.mode`, 'INVALID_BACKEND_MODE', 'backend.mode must be greenfield-managed, module-managed, hybrid, or frontend-only')
+  }
+  if (value.protocolVersion !== undefined && !isSemver(value.protocolVersion)) {
+    add(`${path}.protocolVersion`, 'INVALID_SEMVER', 'backend protocolVersion must be semantic version')
+  }
+  if (value.protocolVersion !== undefined && value.protocolVersion !== MODULA_MODULE_BACKEND_PROTOCOL_VERSION) {
+    add(`${path}.protocolVersion`, 'UNSUPPORTED_BACKEND_PROTOCOL', `backend protocolVersion must be ${MODULA_MODULE_BACKEND_PROTOCOL_VERSION}`)
+  }
+
+  const mode = String(value.mode)
+  const ownsBackend = mode === 'module-managed' || mode === 'hybrid'
+  if (ownsBackend) {
+    requireBackendSection(value.endpoints, `${path}.endpoints`, 'endpoints', add)
+    requireBackendSection(value.authentication, `${path}.authentication`, 'authentication', add)
+    requireBackendSection(value.trust, `${path}.trust`, 'trust', add)
+    requireBackendSection(value.data, `${path}.data`, 'data', add)
+    requireBackendSection(value.deployment, `${path}.deployment`, 'deployment', add)
+  }
+  if (mode === 'frontend-only') {
+    for (const field of ['endpoints', 'authentication', 'trust', 'actions', 'clientAccess'] as const) {
+      if (value[field] !== undefined) add(`${path}.${field}`, 'FRONTEND_ONLY_BACKEND_DECLARATION', `frontend-only modules must not declare backend.${field}`)
+    }
+  }
+  if (mode === 'greenfield-managed' && isRecord(value.data) && value.data.primaryStore === 'module-backend') {
+    add(`${path}.data.primaryStore`, 'BACKEND_DATA_STORE_MISMATCH', 'greenfield-managed modules cannot use module-backend as primaryStore')
+  }
+
+  validateBackendEndpoints(value.endpoints, `${path}.endpoints`, add)
+  validateBackendAuthentication(value.authentication, `${path}.authentication`, ownsBackend, add)
+  validateBackendHealth(value.health, `${path}.health`, add)
+  validateBackendEvents(value.events, `${path}.events`, add)
+  validateBackendWebhooks(value.webhooks, `${path}.webhooks`, add)
+  validateBackendData(value.data, `${path}.data`, ownsBackend, add)
+  validateBackendDeployment(value.deployment, `${path}.deployment`, add)
+  validateBackendTrust(value.trust, `${path}.trust`, value.network, ownsBackend, add)
+  validateBackendNetwork(value.network, `${path}.network`, add)
+  validateBackendLifecycle(value.lifecycle, `${path}.lifecycle`, add)
+  validateBackendActions(value.actions, `${path}.actions`, ownsBackend, add)
+  validateBackendClientAccess(value.clientAccess, `${path}.clientAccess`, add)
+}
+
+function requireBackendSection(value: unknown, path: string, label: string, add: AddIssue) {
+  if (!isRecord(value)) add(path, 'MISSING_BACKEND_SECTION', `${label} is required for module-managed and hybrid backends`)
+}
+
+function validateBackendEndpoints(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_BACKEND_ENDPOINTS', 'backend.endpoints must be an object')
+    return
+  }
+  const allowed = new Set(['baseUrlStrategy', 'apiVersion', 'discoveryPath', 'healthPath', 'capabilitiesPath', 'actionsPath', 'eventsPath', 'webhooksPath', 'allowedHosts'])
+  for (const key of Object.keys(value)) {
+    if (!allowed.has(key)) add(`${path}.${key}`, 'UNKNOWN_BACKEND_ENDPOINT_PROPERTY', `Unknown backend endpoint property ${key}`)
+    if (/url$/i.test(key)) add(`${path}.${key}`, 'ARBITRARY_BACKEND_URL', 'Backend declarations must use one resolved origin, not arbitrary URL fields')
+  }
+  if (!BACKEND_ENDPOINT_STRATEGIES.has(String(value.baseUrlStrategy))) {
+    add(`${path}.baseUrlStrategy`, 'INVALID_BACKEND_ENDPOINT_STRATEGY', 'Unsupported backend baseUrlStrategy')
+  }
+  if (!isSemver(value.apiVersion)) add(`${path}.apiVersion`, 'INVALID_SEMVER', 'backend endpoint apiVersion must be semantic')
+  for (const field of ['discoveryPath', 'healthPath', 'capabilitiesPath', 'actionsPath', 'eventsPath', 'webhooksPath'] as const) {
+    const required = field === 'healthPath'
+    validateBackendPath(value[field], `${path}.${field}`, required, add)
+  }
+  if (value.allowedHosts !== undefined) {
+    if (!Array.isArray(value.allowedHosts) || value.allowedHosts.length > 40) {
+      add(`${path}.allowedHosts`, 'INVALID_ALLOWED_HOSTS', 'allowedHosts must be a bounded array')
+    } else {
+      value.allowedHosts.forEach((host, index) => validateBackendHost(host, `${path}.allowedHosts[${index}]`, add))
+    }
+  }
+}
+
+function validateBackendAuthentication(value: unknown, path: string, ownsBackend: boolean, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_BACKEND_AUTHENTICATION', 'backend.authentication must be an object')
+    return
+  }
+  if (!BACKEND_AUTH_STRATEGIES.has(String(value.strategy))) add(`${path}.strategy`, 'INVALID_BACKEND_AUTH_STRATEGY', 'Unsupported backend authentication strategy')
+  if (typeof value.tokenExchangeRequired !== 'boolean') add(`${path}.tokenExchangeRequired`, 'INVALID_BOOLEAN', 'tokenExchangeRequired must be boolean')
+  if (ownsBackend && value.tokenExchangeRequired !== true) add(`${path}.tokenExchangeRequired`, 'TOKEN_EXCHANGE_REQUIRED', 'module-managed and hybrid backends must use token exchange')
+  validateBackendPath(value.sessionExchangePath, `${path}.sessionExchangePath`, false, add)
+  optionalString(value.audience, `${path}.audience`, 1, 180, add)
+  if (
+    value.tokenTtlSeconds !== undefined &&
+    (typeof value.tokenTtlSeconds !== 'number' || !Number.isInteger(value.tokenTtlSeconds) || value.tokenTtlSeconds < 30 || value.tokenTtlSeconds > 3600)
+  ) {
+    add(`${path}.tokenTtlSeconds`, 'INVALID_TOKEN_TTL', 'module session token TTL must be 30..3600 seconds')
+  }
+  if (value.signingAlg !== undefined && !['EdDSA', 'ES256', 'RS256'].includes(String(value.signingAlg))) add(`${path}.signingAlg`, 'INVALID_SIGNING_ALGORITHM', 'Unsupported signing algorithm')
+  if (value.requiredClaims !== undefined) validateStringArray(value.requiredClaims, `${path}.requiredClaims`, 40, add)
+}
+
+function validateBackendHealth(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_BACKEND_HEALTH', 'backend.health must be an object')
+    return
+  }
+  validateBackendPath(value.path, `${path}.path`, false, add)
+  for (const [field, min, max] of [
+    ['intervalSeconds', 5, 86400],
+    ['timeoutMs', 100, 60000],
+    ['degradedAfterFailures', 1, 100],
+    ['unavailableAfterFailures', 1, 100],
+  ] as const) {
+    const numberValue = value[field]
+    if (numberValue !== undefined && (typeof numberValue !== 'number' || !Number.isInteger(numberValue) || numberValue < min || numberValue > max)) {
+      add(`${path}.${field}`, 'INVALID_BACKEND_HEALTH_NUMBER', `${field} must be ${min}..${max}`)
+    }
+  }
+  if (value.components !== undefined) {
+    if (!Array.isArray(value.components) || value.components.length > 40) {
+      add(`${path}.components`, 'INVALID_BACKEND_HEALTH_COMPONENTS', 'components must be a bounded array')
+    } else {
+      value.components.forEach((component, index) => {
+        if (!BACKEND_HEALTH_COMPONENTS.has(String(component))) add(`${path}.components[${index}]`, 'INVALID_BACKEND_HEALTH_COMPONENT', 'Unsupported backend health component')
+      })
+    }
+  }
+}
+
+function validateBackendEvents(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_BACKEND_EVENTS', 'backend.events must be an object')
+    return
+  }
+  if (value.incoming !== undefined) validateStringArray(value.incoming, `${path}.incoming`, 80, add)
+  if (value.outgoing !== undefined) validateStringArray(value.outgoing, `${path}.outgoing`, 80, add)
+  for (const field of ['incoming', 'outgoing'] as const) {
+    if (!Array.isArray(value[field])) continue
+    value[field].forEach((eventType, index) => {
+      if (typeof eventType === 'string' && !eventType.startsWith('module.')) {
+        add(`${path}.${field}[${index}]`, 'UNNAMESPACED_BACKEND_EVENT', 'Module backend events must use the module.* namespace')
+      }
+    })
+  }
+  if (value.signatureRequired !== undefined && typeof value.signatureRequired !== 'boolean') add(`${path}.signatureRequired`, 'INVALID_BOOLEAN', 'signatureRequired must be boolean')
+  if (value.deadLetterSupported !== undefined && typeof value.deadLetterSupported !== 'boolean') add(`${path}.deadLetterSupported`, 'INVALID_BOOLEAN', 'deadLetterSupported must be boolean')
+  if (
+    value.replayWindowSeconds !== undefined &&
+    (typeof value.replayWindowSeconds !== 'number' || !Number.isInteger(value.replayWindowSeconds) || value.replayWindowSeconds < 30 || value.replayWindowSeconds > 86400)
+  ) {
+    add(`${path}.replayWindowSeconds`, 'INVALID_REPLAY_WINDOW', 'replayWindowSeconds must be 30..86400')
+  }
+}
+
+function validateBackendWebhooks(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_BACKEND_WEBHOOKS', 'backend.webhooks must be an object')
+    return
+  }
+  if (!Array.isArray(value.incoming)) add(`${path}.incoming`, 'INVALID_WEBHOOKS', 'incoming webhooks must be an array')
+  else {
+    value.incoming.forEach((webhook, index) => {
+      if (!isRecord(webhook)) {
+        add(`${path}.incoming[${index}]`, 'INVALID_WEBHOOK', 'incoming webhook must be an object')
+        return
+      }
+      checkString(webhook.id, `${path}.incoming[${index}].id`, 1, 180, add)
+      checkString(webhook.eventType, `${path}.incoming[${index}].eventType`, 1, 180, add)
+      validateBackendPath(webhook.path, `${path}.incoming[${index}].path`, true, add)
+      if (!['hmac-sha256', 'ed25519'].includes(String(webhook.signature))) add(`${path}.incoming[${index}].signature`, 'INVALID_WEBHOOK_SIGNATURE', 'Unsupported webhook signature')
+      if (webhook.replayProtection !== true) add(`${path}.incoming[${index}].replayProtection`, 'WEBHOOK_REPLAY_PROTECTION_REQUIRED', 'Webhook replay protection is required')
+    })
+  }
+  if (!Array.isArray(value.outgoing)) add(`${path}.outgoing`, 'INVALID_WEBHOOKS', 'outgoing webhooks must be an array')
+  else {
+    value.outgoing.forEach((webhook, index) => {
+      if (!isRecord(webhook)) {
+        add(`${path}.outgoing[${index}]`, 'INVALID_WEBHOOK', 'outgoing webhook must be an object')
+        return
+      }
+      checkString(webhook.id, `${path}.outgoing[${index}].id`, 1, 180, add)
+      checkString(webhook.eventType, `${path}.outgoing[${index}].eventType`, 1, 180, add)
+      if (!['greenfield', 'module-backend', 'external-connector'].includes(String(webhook.target))) add(`${path}.outgoing[${index}].target`, 'INVALID_WEBHOOK_TARGET', 'Unsupported webhook target')
+      if (!['hmac-sha256', 'ed25519'].includes(String(webhook.signature))) add(`${path}.outgoing[${index}].signature`, 'INVALID_WEBHOOK_SIGNATURE', 'Unsupported webhook signature')
+      if (!isRecord(webhook.retryPolicy)) add(`${path}.outgoing[${index}].retryPolicy`, 'INVALID_RETRY_POLICY', 'Webhook retry policy is required')
+    })
+  }
+}
+
+function validateBackendData(value: unknown, path: string, ownsBackend: boolean, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_BACKEND_DATA', 'backend.data must be an object')
+    return
+  }
+  if (!BACKEND_DATA_STORES.has(String(value.primaryStore))) add(`${path}.primaryStore`, 'INVALID_BACKEND_DATA_STORE', 'Unsupported backend data store')
+  if (ownsBackend && value.primaryStore !== 'module-backend' && value.primaryStore !== 'mixed') {
+    add(`${path}.primaryStore`, 'BACKEND_DATA_STORE_MISMATCH', 'module-managed and hybrid backends must declare module-backend or mixed primaryStore')
+  }
+  if (!Array.isArray(value.categories) || value.categories.length < (ownsBackend ? 1 : 0) || value.categories.length > 80) {
+    add(`${path}.categories`, 'INVALID_DATA_CATEGORIES', 'data categories must be a bounded array')
+  } else {
+    value.categories.forEach((category, index) => {
+      if (!isRecord(category)) {
+        add(`${path}.categories[${index}]`, 'INVALID_DATA_CATEGORY', 'data category must be an object')
+        return
+      }
+      checkString(category.id, `${path}.categories[${index}].id`, 1, 120, add)
+      checkString(category.description, `${path}.categories[${index}].description`, 1, 500, add)
+      if (!['greenfield', 'module-backend', 'device'].includes(String(category.location))) add(`${path}.categories[${index}].location`, 'INVALID_DATA_LOCATION', 'Unsupported data category location')
+      if (!BACKEND_DATA_CLASSIFICATIONS.has(String(category.classification))) add(`${path}.categories[${index}].classification`, 'INVALID_DATA_CLASSIFICATION', 'Unsupported data classification')
+      if (typeof category.exportable !== 'boolean') add(`${path}.categories[${index}].exportable`, 'INVALID_BOOLEAN', 'exportable must be boolean')
+      if (typeof category.deletable !== 'boolean') add(`${path}.categories[${index}].deletable`, 'INVALID_BOOLEAN', 'deletable must be boolean')
+    })
+  }
+  if (typeof value.exportSupported !== 'boolean') add(`${path}.exportSupported`, 'INVALID_BOOLEAN', 'exportSupported must be boolean')
+  if (typeof value.deletionSupported !== 'boolean') add(`${path}.deletionSupported`, 'INVALID_BOOLEAN', 'deletionSupported must be boolean')
+  optionalString(value.retentionPolicy, `${path}.retentionPolicy`, 1, 500, add)
+  if (!BACKEND_BACKUP_RESPONSIBILITY.has(String(value.backupResponsibility))) add(`${path}.backupResponsibility`, 'INVALID_BACKUP_RESPONSIBILITY', 'Unsupported backup responsibility')
+  if (value.residency !== undefined) validateStringArray(value.residency, `${path}.residency`, 40, add)
+}
+
+function validateBackendDeployment(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_BACKEND_DEPLOYMENT', 'backend.deployment must be an object')
+    return
+  }
+  if (!BACKEND_DEPLOYMENT_OWNERSHIP.has(String(value.ownership))) add(`${path}.ownership`, 'INVALID_BACKEND_DEPLOYMENT_OWNERSHIP', 'Unsupported backend deployment ownership')
+  if (typeof value.multiTenant !== 'boolean') add(`${path}.multiTenant`, 'INVALID_BOOLEAN', 'multiTenant must be boolean')
+  if (typeof value.selfHostingSupported !== 'boolean') add(`${path}.selfHostingSupported`, 'INVALID_BOOLEAN', 'selfHostingSupported must be boolean')
+  if (value.regions !== undefined) validateStringArray(value.regions, `${path}.regions`, 40, add)
+  if (value.dataResidency !== undefined) validateStringArray(value.dataResidency, `${path}.dataResidency`, 40, add)
+}
+
+function validateBackendTrust(value: unknown, path: string, network: unknown, ownsBackend: boolean, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_BACKEND_TRUST', 'backend.trust must be an object')
+    return
+  }
+  checkString(value.publisherId, `${path}.publisherId`, 1, 160, add)
+  optionalString(value.deploymentIdentity, `${path}.deploymentIdentity`, 1, 240, add)
+  if (!Array.isArray(value.allowedOrigins) || value.allowedOrigins.length < (ownsBackend ? 1 : 0) || value.allowedOrigins.length > 40) {
+    add(`${path}.allowedOrigins`, 'INVALID_ALLOWED_ORIGINS', 'allowedOrigins must be a bounded array')
+  } else {
+    const allowLocalhost = isRecord(network) && network.allowLocalhost === true
+    value.allowedOrigins.forEach((origin, index) => validateBackendOrigin(origin, `${path}.allowedOrigins[${index}]`, {allowLocalhost}, add))
+  }
+  if (value.certificatePins !== undefined) validateStringArray(value.certificatePins, `${path}.certificatePins`, 20, add)
+  if (value.signingKeys !== undefined) {
+    if (!Array.isArray(value.signingKeys) || value.signingKeys.length > 20) add(`${path}.signingKeys`, 'INVALID_SIGNING_KEYS', 'signingKeys must be a bounded array')
+    else {
+      value.signingKeys.forEach((key, index) => {
+        if (!isRecord(key)) {
+          add(`${path}.signingKeys[${index}]`, 'INVALID_SIGNING_KEY', 'signing key reference must be an object')
+          return
+        }
+        checkString(key.keyId, `${path}.signingKeys[${index}].keyId`, 1, 160, add)
+        if (!['Ed25519', 'ES256', 'RS256'].includes(String(key.algorithm))) add(`${path}.signingKeys[${index}].algorithm`, 'INVALID_SIGNING_ALGORITHM', 'Unsupported signing key algorithm')
+        optionalString(key.publicKeyRef, `${path}.signingKeys[${index}].publicKeyRef`, 1, 500, add)
+        optionalUrl(key.jwksUrl, `${path}.signingKeys[${index}].jwksUrl`, add)
+      })
+    }
+  }
+  if (value.attestation !== undefined) {
+    if (!isRecord(value.attestation)) add(`${path}.attestation`, 'INVALID_ATTESTATION', 'attestation must be an object')
+    else {
+      if (typeof value.attestation.required !== 'boolean') add(`${path}.attestation.required`, 'INVALID_BOOLEAN', 'attestation.required must be boolean')
+      optionalString(value.attestation.provider, `${path}.attestation.provider`, 1, 120, add)
+    }
+  }
+  for (const field of ['releaseChecksum', 'backendBuildChecksum'] as const) {
+    if (value[field] !== undefined && (typeof value[field] !== 'string' || !SHA256_PATTERN.test(value[field]))) {
+      add(`${path}.${field}`, 'INVALID_CHECKSUM', `${field} must be SHA-256 hex when provided`)
+    }
+  }
+}
+
+function validateBackendNetwork(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_BACKEND_NETWORK', 'backend.network must be an object')
+    return
+  }
+  for (const field of ['allowLocalhost', 'allowPrivateNetwork', 'denyMetadataEndpoints', 'followRedirects'] as const) {
+    if (value[field] !== undefined && typeof value[field] !== 'boolean') add(`${path}.${field}`, 'INVALID_BOOLEAN', `${field} must be boolean`)
+  }
+  if (value.denyMetadataEndpoints === false) add(`${path}.denyMetadataEndpoints`, 'METADATA_ENDPOINTS_MUST_BE_DENIED', 'metadata endpoint blocking must not be disabled')
+  if (value.followRedirects === true) add(`${path}.followRedirects`, 'UNTRUSTED_REDIRECTS_NOT_ALLOWED', 'module backend verification must not follow untrusted redirects by default')
+  if (value.allowedPorts !== undefined) {
+    if (!Array.isArray(value.allowedPorts) || value.allowedPorts.length > 20) add(`${path}.allowedPorts`, 'INVALID_ALLOWED_PORTS', 'allowedPorts must be a bounded array')
+    else {
+      value.allowedPorts.forEach((port, index) => {
+        if (!Number.isInteger(port) || port < 1 || port > 65535) add(`${path}.allowedPorts[${index}]`, 'INVALID_PORT', 'port must be 1..65535')
+      })
+    }
+  }
+  if (value.blockedCidrs !== undefined) validateStringArray(value.blockedCidrs, `${path}.blockedCidrs`, 80, add)
+}
+
+function validateBackendLifecycle(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_BACKEND_LIFECYCLE', 'backend.lifecycle must be an object')
+    return
+  }
+  if (value.initialState !== undefined && !BACKEND_LIFECYCLE_STATES.has(value.initialState as ModulaBackendLifecycleState)) add(`${path}.initialState`, 'INVALID_BACKEND_LIFECYCLE_STATE', 'Unsupported backend lifecycle state')
+  if (value.supportedStates !== undefined) {
+    if (!Array.isArray(value.supportedStates) || value.supportedStates.length < 1) add(`${path}.supportedStates`, 'INVALID_BACKEND_LIFECYCLE_STATES', 'supportedStates must be a non-empty array')
+    else {
+      value.supportedStates.forEach((state, index) => {
+        if (!BACKEND_LIFECYCLE_STATES.has(state as ModulaBackendLifecycleState)) add(`${path}.supportedStates[${index}]`, 'INVALID_BACKEND_LIFECYCLE_STATE', 'Unsupported backend lifecycle state')
+      })
+    }
+  }
+  if (value.reverifyOnEndpointChange !== undefined && typeof value.reverifyOnEndpointChange !== 'boolean') add(`${path}.reverifyOnEndpointChange`, 'INVALID_BOOLEAN', 'reverifyOnEndpointChange must be boolean')
+  if (value.disableOnQuarantine !== undefined && typeof value.disableOnQuarantine !== 'boolean') add(`${path}.disableOnQuarantine`, 'INVALID_BOOLEAN', 'disableOnQuarantine must be boolean')
+}
+
+function validateBackendActions(value: unknown, path: string, ownsBackend: boolean, add: AddIssue) {
+  if (value === undefined) return
+  if (!Array.isArray(value) || value.length > 120) {
+    add(path, 'INVALID_BACKEND_ACTIONS', 'backend actions must be a bounded array')
+    return
+  }
+  if (ownsBackend && value.length < 1) add(path, 'MISSING_BACKEND_ACTIONS', 'module-managed and hybrid action backends must declare actions')
+  value.forEach((action, index) => {
+    if (!isRecord(action)) {
+      add(`${path}[${index}]`, 'INVALID_BACKEND_ACTION', 'backend action must be an object')
+      return
+    }
+    checkString(action.actionId, `${path}[${index}].actionId`, 1, 220, add)
+    if (action.method !== 'POST') add(`${path}[${index}].method`, 'INVALID_BACKEND_ACTION_METHOD', 'backend actions must use POST')
+    validateBackendPath(action.path, `${path}[${index}].path`, true, add)
+    checkString(action.inputSchema, `${path}[${index}].inputSchema`, 1, 240, add)
+    checkString(action.outputSchema, `${path}[${index}].outputSchema`, 1, 240, add)
+    if (!Array.isArray(action.permissions)) add(`${path}[${index}].permissions`, 'INVALID_PERMISSIONS', 'permissions must be an array')
+    if (typeof action.idempotent !== 'boolean') add(`${path}[${index}].idempotent`, 'INVALID_BOOLEAN', 'idempotent must be boolean')
+    if (!BACKEND_ACTION_SIDE_EFFECTS.has(String(action.sideEffects))) add(`${path}[${index}].sideEffects`, 'INVALID_BACKEND_ACTION_SIDE_EFFECTS', 'Unsupported backend action sideEffects')
+    if (!BACKEND_ACTION_CONFIRMATIONS.has(String(action.confirmation))) add(`${path}[${index}].confirmation`, 'INVALID_BACKEND_ACTION_CONFIRMATION', 'Unsupported backend action confirmation')
+    if (typeof action.timeoutMs !== 'number' || !Number.isInteger(action.timeoutMs) || action.timeoutMs < 100 || action.timeoutMs > 60000) add(`${path}[${index}].timeoutMs`, 'INVALID_TIMEOUT', 'backend action timeout must be 100..60000 ms')
+    if (action.sideEffects === 'financial' && !['reauthentication', 'operator'].includes(String(action.confirmation))) {
+      add(`${path}[${index}].confirmation`, 'FINANCIAL_ACTION_CONFIRMATION_REQUIRED', 'financial backend actions require reauthentication or operator confirmation')
+    }
+    if (action.sideEffects === 'destructive' && action.confirmation === 'none') {
+      add(`${path}[${index}].confirmation`, 'DESTRUCTIVE_ACTION_CONFIRMATION_REQUIRED', 'destructive backend actions require confirmation')
+    }
+  })
+}
+
+function validateBackendClientAccess(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_CLIENT_ACCESS', 'backend.clientAccess must be an object')
+    return
+  }
+  if (typeof value.allowed !== 'boolean') add(`${path}.allowed`, 'INVALID_BOOLEAN', 'clientAccess.allowed must be boolean')
+  if (!Array.isArray(value.protocols)) add(`${path}.protocols`, 'INVALID_CLIENT_PROTOCOLS', 'clientAccess.protocols must be an array')
+  else {
+    value.protocols.forEach((protocol, index) => {
+      if (!['https', 'wss'].includes(String(protocol))) add(`${path}.protocols[${index}]`, 'INVALID_CLIENT_PROTOCOL', 'Only https and wss client access are supported')
+    })
+  }
+  if (value.tokenExchangeRequired !== true) add(`${path}.tokenExchangeRequired`, 'TOKEN_EXCHANGE_REQUIRED', 'direct client access requires token exchange')
+  if (!Array.isArray(value.allowedOrigins) || value.allowedOrigins.length < 1 || value.allowedOrigins.length > 40) add(`${path}.allowedOrigins`, 'INVALID_ALLOWED_ORIGINS', 'client access allowedOrigins must be a bounded array')
+  else value.allowedOrigins.forEach((origin, index) => validateBackendOrigin(origin, `${path}.allowedOrigins[${index}]`, {allowLocalhost: false}, add))
+  if (typeof value.maxSessionSeconds !== 'number' || !Number.isInteger(value.maxSessionSeconds) || value.maxSessionSeconds < 30 || value.maxSessionSeconds > 900) {
+    add(`${path}.maxSessionSeconds`, 'INVALID_CLIENT_SESSION_TTL', 'client access sessions must be 30..900 seconds')
+  }
+}
+
 function validateProvenanceEvidence(release: unknown, options: ModulaModuleValidationOptions, add: AddIssue) {
   if (!isRecord(release)) return
   if (options.expectedChecksum && release.checksum !== options.expectedChecksum) {
@@ -614,6 +1035,77 @@ function optionalString(value: unknown, path: string, min: number, max: number, 
 function optionalUrl(value: unknown, path: string, add: AddIssue) {
   if (value === undefined) return
   if (typeof value !== 'string' || !/^https:\/\/[^\s]+$/.test(value)) add(path, 'INVALID_URL', `${path} must be an https URL when provided`)
+}
+
+function validateStringArray(value: unknown, path: string, maxItems: number, add: AddIssue) {
+  if (!Array.isArray(value) || value.length > maxItems) {
+    add(path, 'INVALID_STRING_ARRAY', `${path} must be a bounded string array`)
+    return
+  }
+  value.forEach((item, index) => {
+    if (typeof item !== 'string' || item.trim().length < 1 || item.length > 300) add(`${path}[${index}]`, 'INVALID_STRING', `${path}[${index}] must be a non-empty string`)
+  })
+}
+
+function validateBackendPath(value: unknown, path: string, required: boolean, add: AddIssue) {
+  if (value === undefined) {
+    if (required) add(path, 'MISSING_BACKEND_PATH', `${path} is required`)
+    return
+  }
+  if (
+    typeof value !== 'string' ||
+    value.length < 1 ||
+    value.length > 240 ||
+    !value.startsWith('/') ||
+    value.includes('://') ||
+    value.includes('\\') ||
+    value.includes('..')
+  ) {
+    add(path, 'INVALID_BACKEND_PATH', 'Backend paths must be safe absolute paths under the trusted backend origin')
+  }
+}
+
+function validateBackendHost(value: unknown, path: string, add: AddIssue) {
+  if (typeof value !== 'string' || value.length < 1 || value.length > 253 || value.includes('*') || value.includes('/') || value.includes(':')) {
+    add(path, 'INVALID_BACKEND_HOST', 'allowedHosts must contain exact hostnames without scheme, port, wildcard, or path')
+    return
+  }
+  if (isUnsafeHost(value, false)) add(path, 'UNSAFE_BACKEND_HOST', 'localhost, metadata, link-local, and private hosts are not allowed in manifests')
+}
+
+function validateBackendOrigin(value: unknown, path: string, options: {allowLocalhost: boolean}, add: AddIssue) {
+  if (typeof value !== 'string' || value.length > 300) {
+    add(path, 'INVALID_BACKEND_ORIGIN', 'backend origin must be an https origin')
+    return
+  }
+  let url: URL
+  try {
+    url = new URL(value)
+  } catch {
+    add(path, 'INVALID_BACKEND_ORIGIN', 'backend origin must be a valid https origin')
+    return
+  }
+  if (url.protocol !== 'https:' || url.pathname !== '/' || url.search || url.hash || url.username || url.password) {
+    add(path, 'INVALID_BACKEND_ORIGIN', 'backend origin must be an https origin without path, credentials, query, or fragment')
+  }
+  if (isUnsafeHost(url.hostname, options.allowLocalhost)) {
+    add(path, 'UNSAFE_BACKEND_ORIGIN', 'backend origins must not use localhost, metadata, link-local, or private hosts')
+  }
+}
+
+function isUnsafeHost(host: string, allowLocalhost: boolean): boolean {
+  const normalized = host.toLowerCase().replace(/^\[|\]$/g, '')
+  if (!allowLocalhost && (normalized === 'localhost' || normalized.endsWith('.localhost'))) return true
+  if (normalized === '169.254.169.254' || normalized === 'metadata.google.internal') return true
+  const ipv4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(normalized)
+  if (ipv4) {
+    const octets = ipv4.slice(1).map(Number)
+    if (octets.some(octet => octet > 255)) return true
+    const [a, b] = octets
+    if (a === 127 || a === 0 || a === 10 || a === 169 && b === 254 || a === 172 && b >= 16 && b <= 31 || a === 192 && b === 168) return true
+  }
+  if (normalized === '::1' || normalized.startsWith('fe80:') || normalized.startsWith('fc') || normalized.startsWith('fd')) return true
+  return false
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

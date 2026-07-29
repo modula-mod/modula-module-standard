@@ -35,4 +35,29 @@ const duplicateIds = structuredClone(vaultNotesManifestFixture)
 duplicateIds.views[1].id = duplicateIds.views[0].id
 assert.ok(codes(validateModulaModuleManifest(duplicateIds)).includes('DUPLICATE_ID'), 'duplicate IDs are rejected')
 
+const unsafeBackend = structuredClone(vaultNotesManifestFixture)
+unsafeBackend.schemaVersion = '1.1.0'
+unsafeBackend.standardVersion = '1.1.0'
+unsafeBackend.manifestSchemaVersion = '1.1.0'
+unsafeBackend.backend = {
+  mode: 'module-managed',
+  protocolVersion: '1.0.0',
+  endpoints: {baseUrlStrategy: 'registry', apiVersion: '1.0.0', healthPath: '/v1/health', allowedHosts: ['localhost']},
+  authentication: {strategy: 'greenfield-signed-jwt', tokenExchangeRequired: false},
+  deployment: {ownership: 'publisher-hosted', multiTenant: true, selfHostingSupported: false},
+  data: {primaryStore: 'module-backend', categories: [], exportSupported: true, deletionSupported: true, backupResponsibility: 'publisher'},
+  trust: {publisherId: 'modula', allowedOrigins: ['https://127.0.0.1']},
+}
+const unsafeCodes = codes(validateModulaModuleManifest(unsafeBackend))
+assert.ok(unsafeCodes.includes('TOKEN_EXCHANGE_REQUIRED'), 'module-managed backends require token exchange')
+assert.ok(unsafeCodes.includes('UNSAFE_BACKEND_HOST'), 'unsafe backend hosts are rejected')
+assert.ok(unsafeCodes.includes('UNSAFE_BACKEND_ORIGIN'), 'unsafe backend origins are rejected')
+
+const frontendOnlyBackend = structuredClone(vaultNotesManifestFixture)
+frontendOnlyBackend.schemaVersion = '1.1.0'
+frontendOnlyBackend.standardVersion = '1.1.0'
+frontendOnlyBackend.manifestSchemaVersion = '1.1.0'
+frontendOnlyBackend.backend = {mode: 'frontend-only', endpoints: {baseUrlStrategy: 'registry', apiVersion: '1.0.0', healthPath: '/v1/health'}}
+assert.ok(codes(validateModulaModuleManifest(frontendOnlyBackend)).includes('FRONTEND_ONLY_BACKEND_DECLARATION'), 'frontend-only modules cannot declare backend endpoints')
+
 console.log('module-standard security tests passed')

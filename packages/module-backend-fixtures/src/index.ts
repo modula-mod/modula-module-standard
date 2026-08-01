@@ -1,0 +1,116 @@
+import {
+  MODULA_MODULE_BACKEND_PROTOCOL_VERSION,
+  type ModuleBackendDiscovery,
+  type ModuleSessionClaims,
+} from '@modula/module-backend-protocol'
+import type {ModuleBackendDefinition} from '@modula/module-standard'
+
+export const referenceModuleBackendDefinition: ModuleBackendDefinition = {
+  mode: 'module-managed',
+  protocolVersion: MODULA_MODULE_BACKEND_PROTOCOL_VERSION,
+  endpoints: {
+    baseUrlStrategy: 'registry',
+    apiVersion: '1.0.0',
+    discoveryPath: '/.well-known/modula-module',
+    healthPath: '/v1/health',
+    capabilitiesPath: '/v1/capabilities',
+    actionsPath: '/v1/actions',
+    eventsPath: '/v1/events',
+    webhooksPath: '/v1/webhooks/modula',
+    allowedHosts: ['reference.modules.modula.digital'],
+  },
+  authentication: {
+    strategy: 'greenfield-signed-jwt',
+    tokenExchangeRequired: true,
+    sessionExchangePath: '/v1/session/exchange',
+    audience: 'modula-module:com.example.reference-backend',
+    tokenTtlSeconds: 900,
+    signingAlg: 'EdDSA',
+  },
+  health: {
+    path: '/v1/health',
+    intervalSeconds: 60,
+    timeoutMs: 3000,
+    degradedAfterFailures: 2,
+    unavailableAfterFailures: 5,
+    components: ['discovery', 'identity', 'tls', 'protocol', 'authentication', 'api', 'database', 'events', 'webhooks'],
+  },
+  data: {
+    primaryStore: 'module-backend',
+    categories: [{
+      id: 'reference-items',
+      description: 'Reference backend-owned item records.',
+      location: 'module-backend',
+      classification: 'private',
+      exportable: true,
+      deletable: true,
+    }],
+    exportSupported: true,
+    deletionSupported: true,
+    backupResponsibility: 'publisher',
+    residency: ['GB', 'EU'],
+  },
+  deployment: {
+    ownership: 'publisher-hosted',
+    multiTenant: true,
+    regions: ['eu-west'],
+    dataResidency: ['GB', 'EU'],
+    selfHostingSupported: true,
+  },
+  trust: {
+    publisherId: 'example',
+    allowedOrigins: ['https://reference.modules.modula.digital'],
+    signingKeys: [{keyId: 'reference-ed25519-1', algorithm: 'Ed25519', publicKeyRef: 'publisher-keyring:reference-ed25519-1'}],
+  },
+  network: {
+    denyMetadataEndpoints: true,
+    followRedirects: false,
+    allowedPorts: [443],
+  },
+  lifecycle: {
+    initialState: 'unconfigured',
+    reverifyOnEndpointChange: true,
+    disableOnQuarantine: true,
+  },
+  actions: [{
+    actionId: 'com.example.reference-backend.action.read',
+    method: 'POST',
+    path: '/v1/actions/com.example.reference-backend.action.read',
+    inputSchema: 'schemas/read.input.json',
+    outputSchema: 'schemas/read.output.json',
+    permissions: ['reference:read'],
+    idempotent: true,
+    sideEffects: 'none',
+    confirmation: 'none',
+    timeoutMs: 5000,
+  }],
+}
+
+export const referenceModuleBackendDiscovery: ModuleBackendDiscovery = {
+  moduleId: 'com.example.reference-backend',
+  moduleVersion: '1.0.0',
+  standardVersion: '1.1.0',
+  protocolVersion: MODULA_MODULE_BACKEND_PROTOCOL_VERSION,
+  capabilities: ['actions', 'events', 'health', 'diagnostics'],
+  supportedActions: ['com.example.reference-backend.action.read'],
+  supportedEvents: ['module.com.example.reference-backend.item.created'],
+  healthUrl: 'https://reference.modules.modula.digital/v1/health',
+  documentationUrl: 'https://reference.modules.modula.digital/docs',
+  deploymentId: 'reference-eu-west-1',
+  region: 'eu-west',
+}
+
+export const referenceModuleSessionClaims: ModuleSessionClaims = {
+  issuer: 'https://greenfield.modula.digital',
+  audience: 'modula-module:com.example.reference-backend',
+  subject: 'actor:example',
+  accountId: 'account:example',
+  actorId: 'actor:example',
+  installationId: 'installation:example',
+  moduleId: 'com.example.reference-backend',
+  permissions: ['reference:read'],
+  capabilities: ['actions'],
+  sessionId: 'module-session:example',
+  issuedAt: 1_700_000_000,
+  expiresAt: 1_700_000_900,
+}

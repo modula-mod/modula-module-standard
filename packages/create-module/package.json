@@ -1,0 +1,29 @@
+{
+  "name": "@modula/create-module",
+  "version": "2.0.0",
+  "private": false,
+  "type": "module",
+  "main": "./dist/cli.js",
+  "types": "./dist/cli.d.ts",
+  "bin": {
+    "modula-module": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@modula/module-sdk": "file:../module-sdk",
+    "@modula/module-testing": "file:../module-testing",
+    "@modula/module-validator": "file:../module-validator"
+  }
+}

@@ -4,7 +4,7 @@ The Modula Module Standard is the public contract between a module and a Modula 
 
 Modules declare what they need and what they contribute. Hosts validate the manifest, negotiate compatibility, resolve capabilities, apply permissions and policy, then install or enable only when the contract is acceptable.
 
-Standard 1.1.0 adds module backend ownership declarations. Standard 1.0 manifests remain valid; if `backend` is omitted, hosts interpret the module as `greenfield-managed`. See [module-backends.md](module-backends.md).
+Standard 1.2.0 adds provider-neutral AI product action declarations. Standard 1.0 and 1.1 manifests remain valid. Standard 1.1.0 added module backend ownership declarations; if `backend` is omitted, hosts interpret the module as `greenfield-managed`. See [module-backends.md](module-backends.md) and [module-ai-product-actions.md](module-ai-product-actions.md).
 
 Required top-level areas:
 

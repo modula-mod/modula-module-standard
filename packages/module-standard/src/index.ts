@@ -1,11 +1,13 @@
 import {createHash} from 'node:crypto'
 
-export const MODULA_MODULE_STANDARD_VERSION = '1.1.0' as const
-export const MODULA_MANIFEST_SCHEMA_VERSION = '1.1.0' as const
+export const MODULA_MODULE_STANDARD_VERSION = '1.2.0' as const
+export const MODULA_MANIFEST_SCHEMA_VERSION = '1.2.0' as const
 export const MODULA_DATA_SCHEMA_VERSION = '1.0.0' as const
-export const MODULA_MODULE_STANDARD_SCHEMA_URI = 'https://modula.digital/schemas/module-standard/1.1.0/manifest.schema.json' as const
-export const MODULA_MODULE_STANDARD_PREVIOUS_VERSION = '1.0.0' as const
-export const MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION = '1.0.0' as const
+export const MODULA_MODULE_STANDARD_SCHEMA_URI = 'https://modula.digital/schemas/module-standard/1.2.0/manifest.schema.json' as const
+export const MODULA_MODULE_STANDARD_PREVIOUS_VERSION = '1.1.0' as const
+export const MODULA_MODULE_STANDARD_LEGACY_VERSION = '1.0.0' as const
+export const MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION = '1.1.0' as const
+export const MODULA_MANIFEST_SCHEMA_LEGACY_VERSION = '1.0.0' as const
 export const MODULA_MODULE_BACKEND_PROTOCOL_VERSION = '1.0.0' as const
 
 export type JsonPrimitive = string | number | boolean | null
@@ -464,6 +466,54 @@ export type AutomationDefinitions = {
   }
 }
 
+export type ModuleAIProductActionContextSource =
+  | 'current-record'
+  | 'selected-content'
+  | 'record-metadata'
+  | 'module-settings'
+
+export type ModuleAIProductActionContextClassification =
+  | 'public'
+  | 'internal'
+  | 'private'
+  | 'sensitive'
+
+export type ModuleAIProductActionApplicationMode =
+  | 'preview-only'
+  | 'replace-selection'
+  | 'replace-document'
+  | 'insert'
+  | 'metadata-suggestion'
+
+export type ModuleAIProductActionDefinition = {
+  id: string
+  name: string
+  description: string
+  promptId: string
+  promptVersionRange: string
+  inputSchema: string
+  outputSchema: string
+  requiredPermissions: string[]
+  requiredCapabilities: string[]
+  context: {
+    sources: ModuleAIProductActionContextSource[]
+    maximumRecords: number
+    maximumCharacters: number
+    allowedClassifications: ModuleAIProductActionContextClassification[]
+  }
+  execution: {
+    streaming: boolean
+    structuredOutput: boolean
+    maximumToolCalls: number
+    timeoutMs: number
+  }
+  application: {
+    mode: ModuleAIProductActionApplicationMode
+    explicitConfirmation: boolean
+    createsRecordRevision: boolean
+  }
+}
+
 export type AIIntegrationDefinitions = {
   id: string
   features: Array<'summarize' | 'classify' | 'extract' | 'draft' | 'search' | 'tool-use'>
@@ -472,6 +522,7 @@ export type AIIntegrationDefinitions = {
   structuredOutputs: JsonSchema[]
   permissions: string[]
   policyMode: ModulaPolicyMode
+  productActions?: ModuleAIProductActionDefinition[]
 }
 
 export type SearchDefinitions = {

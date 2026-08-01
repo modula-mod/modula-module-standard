@@ -374,10 +374,10 @@ function createTemplateManifest(moduleId: string, slug: string, name: string): M
   const recordId = `${moduleId}.record.item`
   const functionId = `${moduleId}.function.create-item`
   return {
-    schemaVersion: '1.1.0',
-    standardVersion: '1.1.0',
+    schemaVersion: '1.2.0',
+    standardVersion: '1.2.0',
     moduleVersion: '1.0.0',
-    manifestSchemaVersion: '1.1.0',
+    manifestSchemaVersion: '1.2.0',
     dataSchemaVersion: '1.0.0',
     id: moduleId,
     slug,
@@ -454,7 +454,7 @@ const REFERENCE_BACKEND_MOCK = `import {createServer} from 'node:http'
 const discovery = {
   moduleId: 'com.example.module',
   moduleVersion: '1.0.0',
-  standardVersion: '1.1.0',
+  standardVersion: '1.2.0',
   protocolVersion: '1.0.0',
   capabilities: ['actions', 'events', 'health'],
   supportedActions: ['com.example.module.action.read', 'com.example.module.action.write'],

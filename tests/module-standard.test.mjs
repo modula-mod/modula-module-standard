@@ -46,6 +46,60 @@ backendManifest.permissions = [{id: 'reference:read', reason: 'Read reference ba
 backendManifest.backend = referenceModuleBackendDefinition
 assert.equal(validateModulaModuleManifest(backendManifest).valid, true, 'Standard 1.1 backend manifest validates')
 
+const aiProductManifest = structuredClone(vaultNotesManifestFixture)
+aiProductManifest.schemaVersion = '1.2.0'
+aiProductManifest.standardVersion = '1.2.0'
+aiProductManifest.manifestSchemaVersion = '1.2.0'
+aiProductManifest.capabilities = [
+  ...aiProductManifest.capabilities,
+  {id: 'ai', required: false, reason: 'Offer host-mediated user-triggered AI actions.', degradedBehavior: 'Module remains usable without AI.'},
+]
+aiProductManifest.permissions = [
+  ...aiProductManifest.permissions,
+  {id: 'ai.request', reason: 'Request host-mediated AI product actions.', required: false, risk: 'medium', policyMode: 'require-confirmation'},
+  {id: 'ai.stream', reason: 'Stream AI product action suggestions.', required: false, risk: 'medium', policyMode: 'require-confirmation'},
+  {id: 'ai.structured-output', reason: 'Validate structured AI product action results.', required: false, risk: 'medium', policyMode: 'require-confirmation'},
+  {id: 'ai.context.private', reason: 'Use authorised private module records as AI context.', required: false, risk: 'high', policyMode: 'require-confirmation'},
+]
+aiProductManifest.ai = [{
+  id: `${aiProductManifest.id}.ai.vault-actions`,
+  features: ['summarize', 'extract', 'draft'],
+  allowedContext: ['metadata', 'record-content', 'user-selected-text'],
+  toolDefinitions: [],
+  structuredOutputs: [
+    {$id: 'schemas/note-summary-result.schema.json', type: 'object', required: ['summary', 'keyPoints'], properties: {summary: {type: 'string'}, keyPoints: {type: 'array', items: {type: 'string'}}}},
+  ],
+  permissions: ['ai.request', 'ai.stream', 'ai.structured-output', 'ai.context.private'],
+  policyMode: 'require-confirmation',
+  productActions: [{
+    id: 'vault-notes.ai.summarise',
+    name: 'Summarise note',
+    description: 'Generate a preview-only summary from an authorised note revision.',
+    promptId: 'vault-notes.summarise.v1',
+    promptVersionRange: '^1.0.0',
+    inputSchema: 'schemas/ai/summarise-input.schema.json',
+    outputSchema: 'schemas/ai/note-summary-result.schema.json',
+    requiredPermissions: ['ai.request', 'ai.stream', 'ai.structured-output', 'ai.context.private'],
+    requiredCapabilities: ['text-generation', 'streaming', 'structured-output'],
+    context: {
+      sources: ['current-record', 'record-metadata'],
+      maximumRecords: 1,
+      maximumCharacters: 12000,
+      allowedClassifications: ['private'],
+    },
+    execution: {streaming: true, structuredOutput: true, maximumToolCalls: 0, timeoutMs: 30000},
+    application: {mode: 'preview-only', explicitConfirmation: true, createsRecordRevision: false},
+  }],
+}]
+assert.equal(validateModulaModuleManifest(aiProductManifest).valid, true, 'Standard 1.2 AI product action manifest validates')
+
+const providerBoundAiManifest = structuredClone(aiProductManifest)
+providerBoundAiManifest.ai[0].productActions[0].providerId = 'provider:openai'
+assert.ok(
+  validateModulaModuleManifest(providerBoundAiManifest).issues.some(issue => issue.code === 'PROVIDER_BOUND_AI_PRODUCT_ACTION'),
+  'Standard 1.2 rejects provider-bound AI product actions',
+)
+
 const discoveryValidation = validateModuleBackendDiscovery(referenceModuleBackendDiscovery, {
   moduleId: 'com.example.reference-backend',
   standardVersion: '1.1.0',
@@ -103,7 +157,7 @@ try {
   assert.equal(createResult.exitCode, 0, 'CLI create succeeds')
   const validateResult = await runCli(['module', 'validate', join(tempDir, 'manifest.json')])
   assert.equal(validateResult.exitCode, 0, 'CLI validates generated template')
-  assert.match(validateResult.stdout, /standardVersion: 1\.1\.0/, 'CLI generated template uses Standard 1.1')
+  assert.match(validateResult.stdout, /standardVersion: 1\.2\.0/, 'CLI generated template uses Standard 1.2')
   const inspectResult = await runCli(['module', 'inspect', join(tempDir, 'manifest.json')])
   assert.equal(inspectResult.exitCode, 0, 'CLI inspect succeeds')
   const testResult = await runCli(['module', 'test', join(tempDir, 'manifest.json')])

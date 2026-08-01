@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://modula.digital/schemas/module-standard/1.2.0/manifest.schema.json",
+  "title": "Modula Module Standard 1.2 Manifest",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "standardVersion",
+    "moduleVersion",
+    "manifestSchemaVersion",
+    "dataSchemaVersion",
+    "id",
+    "slug",
+    "name",
+    "description",
+    "publisher",
+    "compatibility",
+    "lifecycle",
+    "permissions",
+    "capabilities",
+    "records",
+    "views",
+    "actions",
+    "functions",
+    "settings",
+    "events",
+    "automations",
+    "search",
+    "ai",
+    "diagnostics",
+    "health",
+    "migrations",
+    "release",
+    "trust"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {"const": "1.2.0"},
+    "standardVersion": {"const": "1.2.0"},
+    "moduleVersion": {"type": "string"},
+    "manifestSchemaVersion": {"const": "1.2.0"},
+    "dataSchemaVersion": {"const": "1.0.0"},
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$"},
+    "slug": {"type": "string", "pattern": "^[a-z][a-z0-9-]{1,80}$"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 120},
+    "description": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "publisher": {"type": "object"},
+    "compatibility": {"type": "object"},
+    "lifecycle": {"type": "object"},
+    "permissions": {"type": "array"},
+    "capabilities": {"type": "array"},
+    "records": {"type": "array"},
+    "views": {"type": "array"},
+    "actions": {"type": "array"},
+    "functions": {"type": "array"},
+    "settings": {"type": "array"},
+    "events": {"type": "array"},
+    "automations": {"type": "array"},
+    "search": {"type": "array"},
+    "ai": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "features", "allowedContext", "toolDefinitions", "structuredOutputs", "permissions", "policyMode"],
+        "not": {
+          "anyOf": [
+            {"required": ["provider"]},
+            {"required": ["providerId"]},
+            {"required": ["providerKind"]},
+            {"required": ["providerUrl"]},
+            {"required": ["model"]},
+            {"required": ["modelId"]},
+            {"required": ["modelProvider"]},
+            {"required": ["apiKey"]},
+            {"required": ["providerPayload"]},
+            {"required": ["providerOptions"]}
+          ]
+        },
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$"},
+          "features": {"type": "array", "items": {"enum": ["summarize", "classify", "extract", "draft", "search", "tool-use"]}, "uniqueItems": true},
+          "allowedContext": {"type": "array", "items": {"enum": ["metadata", "record-content", "search-results", "user-selected-text"]}, "uniqueItems": true},
+          "toolDefinitions": {"type": "array"},
+          "structuredOutputs": {"type": "array"},
+          "permissions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "policyMode": {"enum": ["observe", "warn", "require-confirmation", "block"]},
+          "productActions": {
+            "type": "array",
+            "maxItems": 80,
+            "items": {"$ref": "#/$defs/moduleAIProductActionDefinition"}
+          }
+        }
+      }
+    },
+    "diagnostics": {"type": "object"},
+    "health": {"type": "object"},
+    "migrations": {"type": "object"},
+    "release": {"type": "object"},
+    "trust": {"type": "object"},
+    "backend": {
+      "type": "object",
+      "required": ["mode"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {"enum": ["greenfield-managed", "module-managed", "hybrid", "frontend-only"]},
+        "protocolVersion": {"type": "string"},
+        "endpoints": {"type": "object"},
+        "authentication": {"type": "object"},
+        "health": {"type": "object"},
+        "events": {"type": "object"},
+        "webhooks": {"type": "object"},
+        "data": {"type": "object"},
+        "deployment": {"type": "object"},
+        "trust": {"type": "object"},
+        "network": {"type": "object"},
+        "lifecycle": {"type": "object"},
+        "actions": {"type": "array"},
+        "clientAccess": {"type": "object"}
+      }
+    }
+  },
+  "$defs": {
+    "moduleAIProductActionDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "description",
+        "promptId",
+        "promptVersionRange",
+        "inputSchema",
+        "outputSchema",
+        "requiredPermissions",
+        "requiredCapabilities",
+        "context",
+        "execution",
+        "application"
+      ],
+      "not": {
+        "anyOf": [
+          {"required": ["provider"]},
+          {"required": ["providerId"]},
+          {"required": ["providerKind"]},
+          {"required": ["providerUrl"]},
+          {"required": ["model"]},
+          {"required": ["modelId"]},
+          {"required": ["modelProvider"]},
+          {"required": ["apiKey"]},
+          {"required": ["providerPayload"]},
+          {"required": ["providerOptions"]}
+        ]
+      },
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$"},
+        "name": {"type": "string", "minLength": 1, "maxLength": 120},
+        "description": {"type": "string", "minLength": 1, "maxLength": 800},
+        "promptId": {"type": "string", "minLength": 1, "maxLength": 220, "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$"},
+        "promptVersionRange": {"type": "string", "minLength": 1, "maxLength": 80},
+        "inputSchema": {"type": "string", "minLength": 1, "maxLength": 240},
+        "outputSchema": {"type": "string", "minLength": 1, "maxLength": 240},
+        "requiredPermissions": {"type": "array", "maxItems": 40, "items": {"type": "string", "minLength": 1, "maxLength": 300}, "uniqueItems": true},
+        "requiredCapabilities": {"type": "array", "maxItems": 40, "items": {"type": "string", "minLength": 1, "maxLength": 300}, "uniqueItems": true},
+        "context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sources", "maximumRecords", "maximumCharacters", "allowedClassifications"],
+          "properties": {
+            "sources": {"type": "array", "minItems": 1, "maxItems": 8, "items": {"enum": ["current-record", "selected-content", "record-metadata", "module-settings"]}, "uniqueItems": true},
+            "maximumRecords": {"type": "integer", "minimum": 1, "maximum": 20},
+            "maximumCharacters": {"type": "integer", "minimum": 1, "maximum": 200000},
+            "allowedClassifications": {"type": "array", "minItems": 1, "maxItems": 4, "items": {"enum": ["public", "internal", "private", "sensitive"]}, "uniqueItems": true}
+          }
+        },
+        "execution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["streaming", "structuredOutput", "maximumToolCalls", "timeoutMs"],
+          "properties": {
+            "streaming": {"type": "boolean"},
+            "structuredOutput": {"type": "boolean"},
+            "maximumToolCalls": {"type": "integer", "minimum": 0, "maximum": 8},
+            "timeoutMs": {"type": "integer", "minimum": 1000, "maximum": 120000}
+          }
+        },
+        "application": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "explicitConfirmation", "createsRecordRevision"],
+          "properties": {
+            "mode": {"enum": ["preview-only", "replace-selection", "replace-document", "insert", "metadata-suggestion"]},
+            "explicitConfirmation": {"const": true},
+            "createsRecordRevision": {"type": "boolean"}
+          }
+        }
+      }
+    }
+  }
+}

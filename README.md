@@ -11,7 +11,7 @@ Packages:
 - `@modula/module-testing`: development sandbox for validation, capability simulation, event/search/diagnostic inspection, health preview, and migrations.
 - `@modula/module-fixtures`: canonical Standard 1.0 fixtures.
 
-Standard version: `1.0.0`
+Standard version: `1.2.0`
 
 Build and verify:
 

@@ -294,6 +294,7 @@ export function defineAIIntegration(moduleId: string, name: string, overrides: P
     structuredOutputs: overrides.structuredOutputs ?? [],
     permissions: overrides.permissions ?? [],
     policyMode: overrides.policyMode ?? 'require-confirmation',
+    productActions: overrides.productActions ?? [],
   }
 }
 

@@ -1,7 +1,9 @@
 import {
   MODULA_DATA_SCHEMA_VERSION,
   MODULA_MANIFEST_SCHEMA_VERSION,
+  MODULA_MANIFEST_SCHEMA_LEGACY_VERSION,
   MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION,
+  MODULA_MODULE_STANDARD_LEGACY_VERSION,
   MODULA_MODULE_BACKEND_PROTOCOL_VERSION,
   MODULA_MODULE_STANDARD_PREVIOUS_VERSION,
   MODULA_MODULE_STANDARD_VERSION,
@@ -88,8 +90,16 @@ const ROOT_KEYS = new Set([
 ])
 
 const PLATFORMS = new Set<ModulaPlatform>(['ios', 'android', 'web', 'server'])
-const SUPPORTED_STANDARD_VERSIONS = new Set<string>([MODULA_MODULE_STANDARD_PREVIOUS_VERSION, MODULA_MODULE_STANDARD_VERSION])
-const SUPPORTED_MANIFEST_SCHEMA_VERSIONS = new Set<string>([MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION, MODULA_MANIFEST_SCHEMA_VERSION])
+const SUPPORTED_STANDARD_VERSIONS = new Set<string>([
+  MODULA_MODULE_STANDARD_LEGACY_VERSION,
+  MODULA_MODULE_STANDARD_PREVIOUS_VERSION,
+  MODULA_MODULE_STANDARD_VERSION,
+])
+const SUPPORTED_MANIFEST_SCHEMA_VERSIONS = new Set<string>([
+  MODULA_MANIFEST_SCHEMA_LEGACY_VERSION,
+  MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION,
+  MODULA_MANIFEST_SCHEMA_VERSION,
+])
 const HEALTH_STATES = new Set(['healthy', 'degraded', 'failed', 'disabled', 'quarantined'])
 const LIFECYCLE_STATES = new Set(['discovered', 'installed', 'enabled', 'disabled', 'updating', 'failed', 'quarantined', 'uninstalled'])
 const EXECUTION_MODES = new Set(['declarative', 'built-in', 'hosted', 'remote-http'])
@@ -115,6 +125,10 @@ const BACKEND_LIFECYCLE_STATES = new Set<ModulaBackendLifecycleState>([
 const BACKEND_ACTION_SIDE_EFFECTS = new Set(['none', 'internal-write', 'external-write', 'financial', 'destructive'])
 const BACKEND_ACTION_CONFIRMATIONS = new Set(['none', 'user', 'reauthentication', 'operator'])
 const BACKEND_HEALTH_COMPONENTS = new Set(['discovery', 'identity', 'tls', 'protocol', 'authentication', 'api', 'database', 'queue', 'events', 'webhooks', 'search', 'storage'])
+const AI_PROVIDER_KEYS = new Set(['provider', 'providerId', 'providerKind', 'providerUrl', 'model', 'modelId', 'modelProvider', 'apiKey', 'providerPayload', 'providerOptions', 'openai', 'anthropic', 'google', 'ollama', 'lmStudio', 'azureOpenAI'])
+const AI_PRODUCT_CONTEXT_SOURCES = new Set(['current-record', 'selected-content', 'record-metadata', 'module-settings'])
+const AI_CONTEXT_CLASSIFICATIONS = new Set(['public', 'internal', 'private', 'sensitive'])
+const AI_APPLICATION_MODES = new Set(['preview-only', 'replace-selection', 'replace-document', 'insert', 'metadata-suggestion'])
 const RISK_LEVELS = new Set(['low', 'medium', 'high', 'critical'])
 const POLICY_MODES = new Set(['observe', 'warn', 'require-confirmation', 'block'])
 const VIEW_TYPES = new Set(['collection', 'detail', 'form', 'dashboard', 'settings', 'empty-state', 'error-state', 'loading-state'])
@@ -243,22 +257,25 @@ function validateVersionFields(input: Record<string, unknown>, add: AddIssue) {
     if (!isSemver(input[field])) add(`$.${field}`, 'INVALID_SEMVER', `${field} must be semantic version`)
   }
   if (typeof input.standardVersion === 'string' && !SUPPORTED_STANDARD_VERSIONS.has(input.standardVersion)) {
-    add('$.standardVersion', 'UNSUPPORTED_VERSION', `standardVersion must be ${MODULA_MODULE_STANDARD_PREVIOUS_VERSION} or ${MODULA_MODULE_STANDARD_VERSION}`)
+    add('$.standardVersion', 'UNSUPPORTED_VERSION', `standardVersion must be ${MODULA_MODULE_STANDARD_LEGACY_VERSION}, ${MODULA_MODULE_STANDARD_PREVIOUS_VERSION}, or ${MODULA_MODULE_STANDARD_VERSION}`)
   }
   if (typeof input.schemaVersion === 'string' && !SUPPORTED_MANIFEST_SCHEMA_VERSIONS.has(input.schemaVersion)) {
-    add('$.schemaVersion', 'UNSUPPORTED_VERSION', `schemaVersion must be ${MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION} or ${MODULA_MANIFEST_SCHEMA_VERSION}`)
+    add('$.schemaVersion', 'UNSUPPORTED_VERSION', `schemaVersion must be ${MODULA_MANIFEST_SCHEMA_LEGACY_VERSION}, ${MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION}, or ${MODULA_MANIFEST_SCHEMA_VERSION}`)
   }
   if (typeof input.manifestSchemaVersion === 'string' && !SUPPORTED_MANIFEST_SCHEMA_VERSIONS.has(input.manifestSchemaVersion)) {
-    add('$.manifestSchemaVersion', 'UNSUPPORTED_VERSION', `manifestSchemaVersion must be ${MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION} or ${MODULA_MANIFEST_SCHEMA_VERSION}`)
+    add('$.manifestSchemaVersion', 'UNSUPPORTED_VERSION', `manifestSchemaVersion must be ${MODULA_MANIFEST_SCHEMA_LEGACY_VERSION}, ${MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION}, or ${MODULA_MANIFEST_SCHEMA_VERSION}`)
   }
   if (input.dataSchemaVersion !== MODULA_DATA_SCHEMA_VERSION) {
     add('$.dataSchemaVersion', 'UNSUPPORTED_VERSION', `dataSchemaVersion must be ${MODULA_DATA_SCHEMA_VERSION}`)
   }
-  if (input.standardVersion === MODULA_MODULE_STANDARD_PREVIOUS_VERSION && input.manifestSchemaVersion === MODULA_MANIFEST_SCHEMA_VERSION) {
-    add('$.manifestSchemaVersion', 'VERSION_MISMATCH', 'Standard 1.0 manifests must use manifestSchemaVersion 1.0.0')
-  }
-  if (input.standardVersion === MODULA_MODULE_STANDARD_VERSION && input.manifestSchemaVersion === MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION) {
-    add('$.manifestSchemaVersion', 'VERSION_MISMATCH', 'Standard 1.1 manifests must use manifestSchemaVersion 1.1.0')
+  if (
+    typeof input.standardVersion === 'string' &&
+    typeof input.manifestSchemaVersion === 'string' &&
+    SUPPORTED_STANDARD_VERSIONS.has(input.standardVersion) &&
+    SUPPORTED_MANIFEST_SCHEMA_VERSIONS.has(input.manifestSchemaVersion) &&
+    input.standardVersion !== input.manifestSchemaVersion
+  ) {
+    add('$.manifestSchemaVersion', 'VERSION_MISMATCH', 'manifestSchemaVersion must match standardVersion for Standard 1.0, 1.1 and 1.2 manifests')
   }
   if (!isSemver(input.moduleVersion)) add('$.moduleVersion', 'INVALID_SEMVER', 'moduleVersion must be semantic version')
 }
@@ -484,12 +501,77 @@ function validateSearch(value: unknown, path: string, moduleId: string, recordId
 function validateAi(value: unknown, path: string, moduleId: string, add: AddIssue) {
   const values = validateDefinitionArray<AIIntegrationDefinitions>(value, path, 'ai', add)
   for (const [index, ai] of values.entries()) {
-    validateNamespacedId(ai.id, `${path}[${index}].id`, moduleId, add)
-    for (const field of ['features', 'allowedContext', 'toolDefinitions', 'structuredOutputs', 'permissions'] as const) {
-      if (!Array.isArray(ai[field])) add(`${path}[${index}].${field}`, 'INVALID_ARRAY', `${field} must be an array`)
+    const aiPath = `${path}[${index}]`
+    validateNamespacedId(ai.id, `${aiPath}.id`, moduleId, add)
+    for (const key of Object.keys(ai as Record<string, unknown>)) {
+      if (AI_PROVIDER_KEYS.has(key)) add(`${aiPath}.${key}`, 'PROVIDER_BOUND_AI_DECLARATION', 'AI declarations must not include provider, model, URL, payload or credential fields')
     }
-    if (!POLICY_MODES.has(String(ai.policyMode))) add(`${path}[${index}].policyMode`, 'INVALID_POLICY_MODE', 'AI policyMode is required')
+    for (const field of ['features', 'allowedContext', 'toolDefinitions', 'structuredOutputs', 'permissions'] as const) {
+      if (!Array.isArray(ai[field])) add(`${aiPath}.${field}`, 'INVALID_ARRAY', `${field} must be an array`)
+    }
+    if (!POLICY_MODES.has(String(ai.policyMode))) add(`${aiPath}.policyMode`, 'INVALID_POLICY_MODE', 'AI policyMode is required')
+    if (ai.productActions !== undefined) validateAIProductActions(ai.productActions, `${aiPath}.productActions`, moduleId, ai, add)
   }
+}
+
+function validateAIProductActions(value: unknown, path: string, moduleId: string, parent: AIIntegrationDefinitions, add: AddIssue) {
+  const actions = validateDefinitionArray<Record<string, unknown>>(value, path, 'ai_product_actions', add)
+  void parent
+  for (const [index, action] of actions.entries()) {
+    const actionPath = `${path}[${index}]`
+    void moduleId
+    checkString(action.id, `${actionPath}.id`, 1, 220, add)
+    if (typeof action.id === 'string' && !ID_PATTERN.test(action.id)) add(`${actionPath}.id`, 'INVALID_AI_PRODUCT_ACTION_ID', 'AI product action ID must be lowercase and dot/kebab separated')
+    checkString(action.name, `${actionPath}.name`, 1, 120, add)
+    checkString(action.description, `${actionPath}.description`, 1, 800, add)
+    checkString(action.promptId, `${actionPath}.promptId`, 1, 220, add)
+    if (typeof action.promptId === 'string' && !ID_PATTERN.test(action.promptId)) add(`${actionPath}.promptId`, 'INVALID_PROMPT_ID', 'promptId must be a lowercase dotted immutable identifier')
+    checkString(action.promptVersionRange, `${actionPath}.promptVersionRange`, 1, 80, add)
+    if (typeof action.promptVersionRange === 'string' && !isSemverRange(action.promptVersionRange)) add(`${actionPath}.promptVersionRange`, 'INVALID_PROMPT_VERSION_RANGE', 'promptVersionRange must be a semver range')
+    checkString(action.inputSchema, `${actionPath}.inputSchema`, 1, 240, add)
+    checkString(action.outputSchema, `${actionPath}.outputSchema`, 1, 240, add)
+    validateStringArray(action.requiredPermissions, `${actionPath}.requiredPermissions`, 40, add)
+    validateStringArray(action.requiredCapabilities, `${actionPath}.requiredCapabilities`, 40, add)
+    validateAIProductContext(action.context, `${actionPath}.context`, add)
+    validateAIProductExecution(action.execution, `${actionPath}.execution`, add)
+    validateAIProductApplication(action.application, `${actionPath}.application`, add)
+    for (const key of Object.keys(action)) {
+      if (AI_PROVIDER_KEYS.has(key)) add(`${actionPath}.${key}`, 'PROVIDER_BOUND_AI_PRODUCT_ACTION', 'AI product actions must not bind to providers or models')
+    }
+  }
+}
+
+function validateAIProductContext(value: unknown, path: string, add: AddIssue) {
+  if (!isRecord(value)) {
+    add(path, 'INVALID_AI_PRODUCT_CONTEXT', 'AI product action context is required')
+    return
+  }
+  validateStringEnumArray(value.sources, `${path}.sources`, AI_PRODUCT_CONTEXT_SOURCES, 8, add)
+  validateIntegerRange(value.maximumRecords, `${path}.maximumRecords`, 1, 20, add)
+  validateIntegerRange(value.maximumCharacters, `${path}.maximumCharacters`, 1, 200_000, add)
+  validateStringEnumArray(value.allowedClassifications, `${path}.allowedClassifications`, AI_CONTEXT_CLASSIFICATIONS, 4, add)
+}
+
+function validateAIProductExecution(value: unknown, path: string, add: AddIssue) {
+  if (!isRecord(value)) {
+    add(path, 'INVALID_AI_PRODUCT_EXECUTION', 'AI product action execution is required')
+    return
+  }
+  if (typeof value.streaming !== 'boolean') add(`${path}.streaming`, 'INVALID_BOOLEAN', 'streaming must be boolean')
+  if (typeof value.structuredOutput !== 'boolean') add(`${path}.structuredOutput`, 'INVALID_BOOLEAN', 'structuredOutput must be boolean')
+  validateIntegerRange(value.maximumToolCalls, `${path}.maximumToolCalls`, 0, 8, add)
+  validateIntegerRange(value.timeoutMs, `${path}.timeoutMs`, 1000, 120_000, add)
+}
+
+function validateAIProductApplication(value: unknown, path: string, add: AddIssue) {
+  if (!isRecord(value)) {
+    add(path, 'INVALID_AI_PRODUCT_APPLICATION', 'AI product action application is required')
+    return
+  }
+  if (!AI_APPLICATION_MODES.has(String(value.mode))) add(`${path}.mode`, 'INVALID_AI_APPLICATION_MODE', 'Unsupported AI application mode')
+  if (typeof value.explicitConfirmation !== 'boolean') add(`${path}.explicitConfirmation`, 'INVALID_BOOLEAN', 'explicitConfirmation must be boolean')
+  if (typeof value.createsRecordRevision !== 'boolean') add(`${path}.createsRecordRevision`, 'INVALID_BOOLEAN', 'createsRecordRevision must be boolean')
+  if (value.explicitConfirmation !== true) add(`${path}.explicitConfirmation`, 'AI_APPLICATION_CONFIRMATION_REQUIRED', 'AI product action application must require explicit confirmation')
 }
 
 function validateDiagnostics(value: unknown, path: string, add: AddIssue) {
@@ -566,7 +648,7 @@ function validateBackend(value: unknown, path: string, manifest: Record<string, 
     add(path, 'INVALID_BACKEND', 'backend must be an object when provided')
     return
   }
-  if (manifest.standardVersion === MODULA_MODULE_STANDARD_PREVIOUS_VERSION) {
+  if (manifest.standardVersion === MODULA_MODULE_STANDARD_LEGACY_VERSION) {
     add(path, 'BACKEND_REQUIRES_STANDARD_1_1', 'backend declarations require Modula Module Standard 1.1.0')
   }
   if (!BACKEND_MODES.has(value.mode as ModulaBackendMode)) {
@@ -1045,6 +1127,25 @@ function validateStringArray(value: unknown, path: string, maxItems: number, add
   value.forEach((item, index) => {
     if (typeof item !== 'string' || item.trim().length < 1 || item.length > 300) add(`${path}[${index}]`, 'INVALID_STRING', `${path}[${index}] must be a non-empty string`)
   })
+}
+
+function validateStringEnumArray(value: unknown, path: string, allowed: Set<string>, maxItems: number, add: AddIssue) {
+  if (!Array.isArray(value) || value.length < 1 || value.length > maxItems) {
+    add(path, 'INVALID_STRING_ARRAY', `${path} must be a non-empty bounded string array`)
+    return
+  }
+  const seen = new Set<string>()
+  value.forEach((item, index) => {
+    if (typeof item !== 'string' || !allowed.has(item)) add(`${path}[${index}]`, 'INVALID_ENUM_VALUE', `${path}[${index}] is not supported`)
+    if (typeof item === 'string' && seen.has(item)) add(`${path}[${index}]`, 'DUPLICATE_VALUE', `${path}[${index}] must be unique`)
+    if (typeof item === 'string') seen.add(item)
+  })
+}
+
+function validateIntegerRange(value: unknown, path: string, min: number, max: number, add: AddIssue) {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < min || value > max) {
+    add(path, 'INVALID_INTEGER', `${path} must be an integer between ${min} and ${max}`)
+  }
 }
 
 function validateBackendPath(value: unknown, path: string, required: boolean, add: AddIssue) {

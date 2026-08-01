@@ -32,3 +32,17 @@ Standard 1.1.0 is additive:
 ```
 
 Standard 1.0 modules remain valid. A manifest that omits `backend` is interpreted as `greenfield-managed`; `module-managed` and `hybrid` backend declarations require Standard 1.1.0.
+
+Standard 1.2.0 is additive:
+
+```json
+{
+  "schemaVersion": "1.2.0",
+  "standardVersion": "1.2.0",
+  "moduleVersion": "1.0.0",
+  "manifestSchemaVersion": "1.2.0",
+  "dataSchemaVersion": "1.0.0"
+}
+```
+
+It adds provider-neutral `ai[].productActions[]` declarations for user-triggered AI workflows. Standard 1.0 and 1.1 manifests remain valid unchanged.

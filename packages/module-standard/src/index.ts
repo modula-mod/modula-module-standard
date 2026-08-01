@@ -1,27 +1,59 @@
 import {createHash} from 'node:crypto'
 
-export const MODULA_MODULE_STANDARD_VERSION = '1.2.0' as const
-export const MODULA_MANIFEST_SCHEMA_VERSION = '1.2.0' as const
+export const MODULA_MODULE_STANDARD_VERSION = '2.0.0' as const
+export const MODULA_MANIFEST_SCHEMA_VERSION = '2.0.0' as const
 export const MODULA_DATA_SCHEMA_VERSION = '1.0.0' as const
-export const MODULA_MODULE_STANDARD_SCHEMA_URI = 'https://modula.digital/schemas/module-standard/1.2.0/manifest.schema.json' as const
-export const MODULA_MODULE_STANDARD_PREVIOUS_VERSION = '1.1.0' as const
+export const MODULA_MODULE_STANDARD_SCHEMA_URI = 'https://modula.digital/schemas/module-standard/2.0.0/manifest.schema.json' as const
+export const MODULA_MODULE_STANDARD_PREVIOUS_VERSION = '1.2.0' as const
+export const MODULA_MODULE_STANDARD_1_1_VERSION = '1.1.0' as const
 export const MODULA_MODULE_STANDARD_LEGACY_VERSION = '1.0.0' as const
-export const MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION = '1.1.0' as const
+export const MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION = '1.2.0' as const
+export const MODULA_MANIFEST_SCHEMA_1_1_VERSION = '1.1.0' as const
 export const MODULA_MANIFEST_SCHEMA_LEGACY_VERSION = '1.0.0' as const
 export const MODULA_MODULE_BACKEND_PROTOCOL_VERSION = '1.0.0' as const
+export const MODULA_MODULE_STANDARD_SUPPORTED_VERSIONS = [
+  MODULA_MODULE_STANDARD_LEGACY_VERSION,
+  MODULA_MODULE_STANDARD_1_1_VERSION,
+  MODULA_MODULE_STANDARD_PREVIOUS_VERSION,
+  MODULA_MODULE_STANDARD_VERSION,
+] as const
+export const MODULA_MANIFEST_SCHEMA_SUPPORTED_VERSIONS = [
+  MODULA_MANIFEST_SCHEMA_LEGACY_VERSION,
+  MODULA_MANIFEST_SCHEMA_1_1_VERSION,
+  MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION,
+  MODULA_MANIFEST_SCHEMA_VERSION,
+] as const
 
 export type JsonPrimitive = string | number | boolean | null
 export type JsonValue = JsonPrimitive | JsonObject | JsonValue[]
 export type JsonObject = {[key: string]: JsonValue}
 export type JsonSchema = JsonObject
 
-export type ModulaPlatform = 'ios' | 'android' | 'web' | 'server'
+export type ModulaPlatform = 'ios' | 'android' | 'web' | 'server' | 'desktop'
 export type ModulaRiskLevel = 'low' | 'medium' | 'high' | 'critical'
 export type ModulaPolicyMode = 'observe' | 'warn' | 'require-confirmation' | 'block'
 export type ModulaReviewStatus = 'unreviewed' | 'in-review' | 'approved' | 'rejected' | 'quarantined'
 export type ModulaTrustLevel = 'first-party' | 'verified-publisher' | 'reviewed-community' | 'untrusted'
 export type ModulaReleaseChannel = 'dev' | 'alpha' | 'beta' | 'stable' | 'lts'
-export type ModulaHealthState = 'healthy' | 'degraded' | 'failed' | 'disabled' | 'quarantined'
+export type ModulaHealthState =
+  | 'healthy'
+  | 'degraded'
+  | 'failed'
+  | 'disabled'
+  | 'quarantined'
+  | 'warning'
+  | 'error'
+  | 'maintenance'
+  | 'updating'
+  | 'migration'
+  | 'broken'
+  | 'version-mismatch'
+  | 'host-incompatible'
+  | 'backend-unavailable'
+  | 'provider-unavailable'
+  | 'ai-unavailable'
+  | 'storage-full'
+  | 'search-rebuilding'
 export type ModulaLifecycleState = 'discovered' | 'installed' | 'enabled' | 'disabled' | 'updating' | 'failed' | 'quarantined' | 'uninstalled'
 export type ModulaExecutionMode = 'declarative' | 'built-in' | 'hosted' | 'remote-http'
 export type ModulaBackendMode = 'greenfield-managed' | 'module-managed' | 'hybrid' | 'frontend-only'
@@ -60,6 +92,25 @@ export type ModulaCapabilityId =
   | 'migrations'
   | 'connectors'
   | 'module-backend'
+  | 'services'
+  | 'apis'
+  | 'hooks'
+  | 'metrics'
+  | 'jobs'
+  | 'storage'
+  | 'widgets'
+  | 'navigation'
+  | 'ui-contributions'
+  | 'offline'
+  | 'realtime'
+  | 'exports'
+  | 'imports'
+  | 'sync'
+  | 'sharing'
+  | 'history'
+  | 'permissions-v2'
+  | 'marketplace'
+  | 'engines'
 
 export type Publisher = {
   id: string
@@ -773,6 +824,8 @@ export function manifestChecksum(manifest: unknown): string {
   return sha256Hex(stableJson(manifest))
 }
 
+export * from './standard-2.js'
+
 export function negotiateCompatibility(manifest: Pick<ModulaModuleManifest, 'compatibility'>, host: HostCompatibility): CompatibilityNegotiationResult {
   const failures: string[] = []
   if (!satisfiesSemverRange(host.hostVersion, manifest.compatibility.host)) {
@@ -781,7 +834,7 @@ export function negotiateCompatibility(manifest: Pick<ModulaModuleManifest, 'com
   if (!satisfiesSemverRange(host.runtimeVersion, manifest.compatibility.runtime)) {
     failures.push(`runtime ${host.runtimeVersion} does not satisfy ${manifest.compatibility.runtime}`)
   }
-  if (!satisfiesSemverRange(host.standardVersion, manifest.compatibility.standard)) {
+  if (!satisfiesSemverRange(host.standardVersion, manifest.compatibility.standard) && !isBackwardCompatibleStandardRange(host.standardVersion, manifest.compatibility.standard)) {
     failures.push(`standard ${host.standardVersion} does not satisfy ${manifest.compatibility.standard}`)
   }
   if (!manifest.compatibility.platforms.includes(host.platform)) {
@@ -822,6 +875,12 @@ export function negotiateCapabilities(
     missingRequired,
     unavailableOptional,
   }
+}
+
+function isBackwardCompatibleStandardRange(hostStandardVersion: string, requestedRange: string): boolean {
+  const host = parseSemver(hostStandardVersion)
+  if (!host || host[0] < 2) return false
+  return /(?:^|[<>=~^\s])1\.(?:0|1|2)\.0/.test(requestedRange) || requestedRange === '^1.0.0' || requestedRange === '^1.1.0' || requestedRange === '^1.2.0'
 }
 
 export function isLifecycleTransitionAllowed(

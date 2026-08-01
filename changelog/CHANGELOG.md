@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0
+
+- Add independently versioned manifest sections through `sectionVersions`.
+- Add dependency graph declarations for requires, optional, recommended, conflicts, replaces, and provides.
+- Add service, API, event bus, hook, job, storage, widget, navigation, UI contribution, metrics, offline, realtime, marketplace, and engine-readiness contracts.
+- Add dependency graph resolution and Standard 2.0 summary helpers.
+- Expand the SDK and CLI with contract-only 2.0 builders and diagnostics commands.
+- Keep Standard 1.0, 1.1, and 1.2 manifests valid unchanged.
+
 ## 1.2.0
 
 - Add provider-neutral `ModuleAIProductActionDefinition` contracts.

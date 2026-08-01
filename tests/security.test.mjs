@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {vaultNotesManifestFixture} from '../packages/module-fixtures/dist/index.js'
+import {vaultNotesManifestFixture, vaultNotesStandard20ManifestFixture} from '../packages/module-fixtures/dist/index.js'
 import {validateModulaModuleManifest} from '../packages/module-validator/dist/index.js'
 
 function codes(result) {
@@ -59,5 +59,23 @@ frontendOnlyBackend.standardVersion = '1.1.0'
 frontendOnlyBackend.manifestSchemaVersion = '1.1.0'
 frontendOnlyBackend.backend = {mode: 'frontend-only', endpoints: {baseUrlStrategy: 'registry', apiVersion: '1.0.0', healthPath: '/v1/health'}}
 assert.ok(codes(validateModulaModuleManifest(frontendOnlyBackend)).includes('FRONTEND_ONLY_BACKEND_DECLARATION'), 'frontend-only modules cannot declare backend endpoints')
+
+const standard20OnLegacy = structuredClone(vaultNotesManifestFixture)
+standard20OnLegacy.serviceRegistry = {version: '2.0.0', items: []}
+assert.ok(codes(validateModulaModuleManifest(standard20OnLegacy)).includes('STANDARD_2_FIELDS_REQUIRE_2_0'), 'Standard 2.0 fields require Standard 2.0')
+
+const missingSectionVersions = structuredClone(vaultNotesStandard20ManifestFixture)
+delete missingSectionVersions.sectionVersions
+assert.ok(codes(validateModulaModuleManifest(missingSectionVersions)).includes('MISSING_SECTION_VERSIONS'), 'Standard 2.0 section versions are required')
+
+const badApiPath = structuredClone(vaultNotesStandard20ManifestFixture)
+badApiPath.apiRegistry.items[0].path = '/api/modula/digital.modula.tasks/notes'
+assert.ok(codes(validateModulaModuleManifest(badApiPath)).includes('INVALID_MODULE_API_PATH'), 'Standard 2.0 API paths stay inside module namespace')
+
+const badPermissionCategory = structuredClone(vaultNotesStandard20ManifestFixture)
+badPermissionCategory.permissionModel.categories.superuser = [{id: 'records:*', reason: 'Escalate'}]
+const badPermissionCodes = codes(validateModulaModuleManifest(badPermissionCategory))
+assert.ok(badPermissionCodes.includes('UNKNOWN_PERMISSION_CATEGORY'), 'unknown Standard 2.0 permission categories are rejected')
+assert.ok(badPermissionCodes.includes('WILDCARD_PERMISSION'), 'Standard 2.0 wildcard permissions are rejected')
 
 console.log('module-standard security tests passed')

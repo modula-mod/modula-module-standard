@@ -1,12 +1,15 @@
 import {
   MODULA_DATA_SCHEMA_VERSION,
   MODULA_MANIFEST_SCHEMA_VERSION,
-  MODULA_MANIFEST_SCHEMA_LEGACY_VERSION,
-  MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION,
-  MODULA_MODULE_STANDARD_LEGACY_VERSION,
   MODULA_MODULE_BACKEND_PROTOCOL_VERSION,
-  MODULA_MODULE_STANDARD_PREVIOUS_VERSION,
+  MODULA_MODULE_STANDARD_LEGACY_VERSION,
   MODULA_MODULE_STANDARD_VERSION,
+  MODULA_MANIFEST_SCHEMA_SUPPORTED_VERSIONS,
+  MODULA_MODULE_STANDARD_2_VERSION,
+  MODULA_MODULE_STANDARD_SUPPORTED_VERSIONS,
+  MODULE_STANDARD_20_HEALTH_STATES,
+  MODULE_STANDARD_20_PERMISSION_CATEGORIES,
+  MODULE_STANDARD_20_SECTION_NAMES,
   type ActionDefinitions,
   type AIIntegrationDefinitions,
   type AutomationDefinitions,
@@ -87,20 +90,46 @@ const ROOT_KEYS = new Set([
   'release',
   'trust',
   'backend',
+  'sectionVersions',
+  'identity',
+  'dependencyGraph',
+  'serviceRegistry',
+  'apiRegistry',
+  'eventBus',
+  'hookRegistry',
+  'capabilityDiscovery',
+  'healthModel',
+  'diagnosticsModel',
+  'metrics',
+  'permissionModel',
+  'jobRegistry',
+  'storageModel',
+  'widgetRegistry',
+  'navigationRegistry',
+  'uiContributions',
+  'automationRegistry',
+  'offline',
+  'realtime',
+  'versioning',
+  'compatibilityMatrix',
+  'marketplace',
+  'engineReadiness',
+  'exports',
+  'imports',
+  'synchronization',
+  'integrations',
+  'billing',
+  'telemetry',
+  'accessibility',
+  'localization',
+  'appearance',
+  'onboarding',
 ])
 
-const PLATFORMS = new Set<ModulaPlatform>(['ios', 'android', 'web', 'server'])
-const SUPPORTED_STANDARD_VERSIONS = new Set<string>([
-  MODULA_MODULE_STANDARD_LEGACY_VERSION,
-  MODULA_MODULE_STANDARD_PREVIOUS_VERSION,
-  MODULA_MODULE_STANDARD_VERSION,
-])
-const SUPPORTED_MANIFEST_SCHEMA_VERSIONS = new Set<string>([
-  MODULA_MANIFEST_SCHEMA_LEGACY_VERSION,
-  MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION,
-  MODULA_MANIFEST_SCHEMA_VERSION,
-])
-const HEALTH_STATES = new Set(['healthy', 'degraded', 'failed', 'disabled', 'quarantined'])
+const PLATFORMS = new Set<ModulaPlatform>(['ios', 'android', 'web', 'server', 'desktop'])
+const SUPPORTED_STANDARD_VERSIONS = new Set<string>(MODULA_MODULE_STANDARD_SUPPORTED_VERSIONS)
+const SUPPORTED_MANIFEST_SCHEMA_VERSIONS = new Set<string>(MODULA_MANIFEST_SCHEMA_SUPPORTED_VERSIONS)
+const HEALTH_STATES = new Set(['healthy', 'degraded', 'failed', 'disabled', 'quarantined', ...MODULE_STANDARD_20_HEALTH_STATES])
 const LIFECYCLE_STATES = new Set(['discovered', 'installed', 'enabled', 'disabled', 'updating', 'failed', 'quarantined', 'uninstalled'])
 const EXECUTION_MODES = new Set(['declarative', 'built-in', 'hosted', 'remote-http'])
 const BACKEND_MODES = new Set<ModulaBackendMode>(['greenfield-managed', 'module-managed', 'hybrid', 'frontend-only'])
@@ -156,6 +185,25 @@ const ALLOWED_CAPABILITIES = new Set([
   'migrations',
   'connectors',
   'module-backend',
+  'services',
+  'apis',
+  'hooks',
+  'metrics',
+  'jobs',
+  'storage',
+  'widgets',
+  'navigation',
+  'ui-contributions',
+  'offline',
+  'realtime',
+  'exports',
+  'imports',
+  'sync',
+  'sharing',
+  'history',
+  'permissions-v2',
+  'marketplace',
+  'engines',
 ])
 const HIGH_RISK_PERMISSION_PREFIXES = ['admin:', 'dimon:', 'wallet:', 'billing:', 'identity:', 'security:', 'medical:', 'legal:', 'finance:']
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i
@@ -227,6 +275,7 @@ export function validateModulaModuleManifest(input: unknown, options: ModulaModu
   validateRelease(input.release, '$.release', add)
   validateTrust(input.trust, '$.trust', input.publisher, add)
   validateBackend(input.backend, '$.backend', input, add)
+  validateStandard20Extensions(input, moduleId, add)
   validateProvenanceEvidence(input.release, options, add)
   validateIdUniqueness(input, add)
   validateCrossContracts(input, add)
@@ -257,13 +306,13 @@ function validateVersionFields(input: Record<string, unknown>, add: AddIssue) {
     if (!isSemver(input[field])) add(`$.${field}`, 'INVALID_SEMVER', `${field} must be semantic version`)
   }
   if (typeof input.standardVersion === 'string' && !SUPPORTED_STANDARD_VERSIONS.has(input.standardVersion)) {
-    add('$.standardVersion', 'UNSUPPORTED_VERSION', `standardVersion must be ${MODULA_MODULE_STANDARD_LEGACY_VERSION}, ${MODULA_MODULE_STANDARD_PREVIOUS_VERSION}, or ${MODULA_MODULE_STANDARD_VERSION}`)
+    add('$.standardVersion', 'UNSUPPORTED_VERSION', `standardVersion must be one of ${Array.from(SUPPORTED_STANDARD_VERSIONS).join(', ')}`)
   }
   if (typeof input.schemaVersion === 'string' && !SUPPORTED_MANIFEST_SCHEMA_VERSIONS.has(input.schemaVersion)) {
-    add('$.schemaVersion', 'UNSUPPORTED_VERSION', `schemaVersion must be ${MODULA_MANIFEST_SCHEMA_LEGACY_VERSION}, ${MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION}, or ${MODULA_MANIFEST_SCHEMA_VERSION}`)
+    add('$.schemaVersion', 'UNSUPPORTED_VERSION', `schemaVersion must be one of ${Array.from(SUPPORTED_MANIFEST_SCHEMA_VERSIONS).join(', ')}`)
   }
   if (typeof input.manifestSchemaVersion === 'string' && !SUPPORTED_MANIFEST_SCHEMA_VERSIONS.has(input.manifestSchemaVersion)) {
-    add('$.manifestSchemaVersion', 'UNSUPPORTED_VERSION', `manifestSchemaVersion must be ${MODULA_MANIFEST_SCHEMA_LEGACY_VERSION}, ${MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION}, or ${MODULA_MANIFEST_SCHEMA_VERSION}`)
+    add('$.manifestSchemaVersion', 'UNSUPPORTED_VERSION', `manifestSchemaVersion must be one of ${Array.from(SUPPORTED_MANIFEST_SCHEMA_VERSIONS).join(', ')}`)
   }
   if (input.dataSchemaVersion !== MODULA_DATA_SCHEMA_VERSION) {
     add('$.dataSchemaVersion', 'UNSUPPORTED_VERSION', `dataSchemaVersion must be ${MODULA_DATA_SCHEMA_VERSION}`)
@@ -275,7 +324,7 @@ function validateVersionFields(input: Record<string, unknown>, add: AddIssue) {
     SUPPORTED_MANIFEST_SCHEMA_VERSIONS.has(input.manifestSchemaVersion) &&
     input.standardVersion !== input.manifestSchemaVersion
   ) {
-    add('$.manifestSchemaVersion', 'VERSION_MISMATCH', 'manifestSchemaVersion must match standardVersion for Standard 1.0, 1.1 and 1.2 manifests')
+    add('$.manifestSchemaVersion', 'VERSION_MISMATCH', 'manifestSchemaVersion must match standardVersion for supported manifests')
   }
   if (!isSemver(input.moduleVersion)) add('$.moduleVersion', 'INVALID_SEMVER', 'moduleVersion must be semantic version')
 }
@@ -1018,6 +1067,430 @@ function validateBackendClientAccess(value: unknown, path: string, add: AddIssue
   if (typeof value.maxSessionSeconds !== 'number' || !Number.isInteger(value.maxSessionSeconds) || value.maxSessionSeconds < 30 || value.maxSessionSeconds > 900) {
     add(`${path}.maxSessionSeconds`, 'INVALID_CLIENT_SESSION_TTL', 'client access sessions must be 30..900 seconds')
   }
+}
+
+const STANDARD_20_EXTENSION_KEYS = [
+  'identity',
+  'dependencyGraph',
+  'serviceRegistry',
+  'apiRegistry',
+  'eventBus',
+  'hookRegistry',
+  'capabilityDiscovery',
+  'healthModel',
+  'diagnosticsModel',
+  'metrics',
+  'permissionModel',
+  'jobRegistry',
+  'storageModel',
+  'widgetRegistry',
+  'navigationRegistry',
+  'uiContributions',
+  'automationRegistry',
+  'offline',
+  'realtime',
+  'versioning',
+  'compatibilityMatrix',
+  'marketplace',
+  'engineReadiness',
+  'exports',
+  'imports',
+  'synchronization',
+  'integrations',
+  'billing',
+  'telemetry',
+  'accessibility',
+  'localization',
+  'appearance',
+  'onboarding',
+] as const
+
+const STANDARD_20_SERVICE_KINDS = new Set(['search', 'export', 'autosave', 'revision', 'history', 'markdown', 'storage', 'ai', 'automation', 'custom'])
+const STANDARD_20_API_METHODS = new Set(['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])
+const STANDARD_20_API_SIDE_EFFECTS = new Set(['none', 'read', 'write', 'destructive', 'external', 'financial'])
+const STANDARD_20_HOOK_PHASES = new Set(['before', 'after'])
+const STANDARD_20_JOB_KINDS = new Set(['cron', 'queue', 'delayed', 'recurring', 'realtime', 'repair', 'migration', 'cleanup', 'reindex', 'sync', 'health'])
+const STANDARD_20_STORAGE_KINDS = new Set(['structured-records', 'blob-storage', 'attachments', 'object-storage', 'cache', 'temporary-storage', 'encrypted-storage', 'secrets', 'settings', 'history', 'search-index', 'ai-memory'])
+const STANDARD_20_WIDGET_SURFACES = new Set(['board', 'profile', 'dashboard', 'home', 'settings', 'search', 'sidebar', 'floating', 'lock-screen'])
+const STANDARD_20_NAVIGATION_KINDS = new Set(['route', 'tab', 'sheet', 'dialog', 'drawer', 'menu-item', 'composer-tool', 'context-menu', 'quick-action', 'search-provider'])
+const STANDARD_20_UI_KINDS = new Set(['board-card', 'profile-tab', 'settings-section', 'composer-action', 'feed-card', 'notification-card', 'context-menu', 'toolbar-button', 'overflow-menu', 'action-sheet', 'search-provider'])
+const STANDARD_20_OFFLINE_SYNC = new Set(['none', 'manual', 'background', 'realtime'])
+const STANDARD_20_CONFLICT_STRATEGIES = new Set(['client-wins', 'server-wins', 'merge', 'manual-review'])
+const STANDARD_20_COMPAT_PLATFORMS = new Set(['ios', 'android', 'web', 'desktop', 'server'])
+const STANDARD_20_ENGINES = new Set(['declarative-ui', 'records', 'actions', 'functions', 'ai', 'automation', 'media', 'documents', 'game', 'webgpu', 'spatial', 'unity', 'godot', 'custom-native'])
+
+function validateStandard20Extensions(input: Record<string, unknown>, moduleId: string, add: AddIssue) {
+  const isStandard20 = input.standardVersion === MODULA_MODULE_STANDARD_2_VERSION
+  const hasStandard20Extensions = input.sectionVersions !== undefined || STANDARD_20_EXTENSION_KEYS.some(key => input[key] !== undefined)
+  if (!isStandard20) {
+    if (hasStandard20Extensions) {
+      add('$.standardVersion', 'STANDARD_2_FIELDS_REQUIRE_2_0', 'Standard 2.0 extension sections require standardVersion 2.0.0')
+    }
+    return
+  }
+
+  validateSectionVersions(input.sectionVersions, add)
+  validateVersionedSection(input.identity, '$.identity', add)
+  validateDependencyGraph(input.dependencyGraph, '$.dependencyGraph', moduleId, add)
+  validateVersionedSection(input.serviceRegistry, '$.serviceRegistry', add, (item, itemPath) => validateService(item, itemPath, moduleId, add))
+  validateVersionedSection(input.apiRegistry, '$.apiRegistry', add, (item, itemPath) => validateApiOperation(item, itemPath, moduleId, add))
+  validateVersionedSection(input.eventBus, '$.eventBus', add, (item, itemPath) => validateGenericNamedItem(item, itemPath, moduleId, add))
+  validateVersionedSection(input.hookRegistry, '$.hookRegistry', add, (item, itemPath) => validateHook(item, itemPath, moduleId, add))
+  validateCapabilityDiscovery(input.capabilityDiscovery, '$.capabilityDiscovery', add)
+  validateVersionedSection(input.healthModel, '$.healthModel', add, (item, itemPath) => {
+    if (isRecord(item) && item.status !== undefined && !HEALTH_STATES.has(String(item.status))) {
+      add(`${itemPath}.status`, 'INVALID_HEALTH_STATE', 'Unsupported Standard 2.0 health state')
+    }
+  })
+  validateVersionedSection(input.diagnosticsModel, '$.diagnosticsModel', add)
+  validateVersionedSection(input.metrics, '$.metrics', add, (item, itemPath) => validateGenericNamedItem(item, itemPath, moduleId, add))
+  validatePermissionModel(input.permissionModel, '$.permissionModel', add)
+  validateVersionedSection(input.jobRegistry, '$.jobRegistry', add, (item, itemPath) => validateJob(item, itemPath, moduleId, add))
+  validateVersionedSection(input.storageModel, '$.storageModel', add, (item, itemPath) => validateStorage(item, itemPath, moduleId, add))
+  validateVersionedSection(input.widgetRegistry, '$.widgetRegistry', add, (item, itemPath) => validateWidget(item, itemPath, moduleId, add))
+  validateVersionedSection(input.navigationRegistry, '$.navigationRegistry', add, (item, itemPath) => validateNavigation(item, itemPath, moduleId, add))
+  validateVersionedSection(input.uiContributions, '$.uiContributions', add, (item, itemPath) => validateUiContribution(item, itemPath, moduleId, add))
+  validateVersionedSection(input.automationRegistry, '$.automationRegistry', add, (item, itemPath) => validateAutomation20(item, itemPath, moduleId, add))
+  validateOffline(input.offline, '$.offline', add)
+  validateRealtime(input.realtime, '$.realtime', add)
+  validateVersioning(input.versioning, '$.versioning', add)
+  validateCompatibilityMatrix(input.compatibilityMatrix, '$.compatibilityMatrix', add)
+  validateMarketplace(input.marketplace, '$.marketplace', add)
+  validateEngineReadiness(input.engineReadiness, '$.engineReadiness', add)
+  for (const key of ['exports', 'imports', 'synchronization', 'integrations', 'billing', 'telemetry', 'accessibility', 'localization', 'appearance', 'onboarding'] as const) {
+    validateVersionedSection(input[key], `$.${key}`, add)
+  }
+}
+
+function validateSectionVersions(value: unknown, add: AddIssue) {
+  if (!isRecord(value)) {
+    add('$.sectionVersions', 'MISSING_SECTION_VERSIONS', 'Standard 2.0 manifests must version every manifest section')
+    return
+  }
+  const seen = new Set(Object.keys(value))
+  for (const section of MODULE_STANDARD_20_SECTION_NAMES) {
+    if (!seen.has(section)) {
+      add(`$.sectionVersions.${section}`, 'MISSING_SECTION_VERSION', `Section ${section} must declare a semantic version`)
+      continue
+    }
+    if (!isSemver(value[section])) add(`$.sectionVersions.${section}`, 'INVALID_SEMVER', `Section ${section} version must be semantic`)
+  }
+  for (const section of seen) {
+    if (!MODULE_STANDARD_20_SECTION_NAMES.includes(section as any)) add(`$.sectionVersions.${section}`, 'UNKNOWN_SECTION_VERSION', `Unknown Standard 2.0 section ${section}`)
+  }
+}
+
+function validateVersionedSection(
+  value: unknown,
+  path: string,
+  add: AddIssue,
+  validateItem?: (item: Record<string, unknown>, itemPath: string) => void,
+) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_VERSIONED_SECTION', 'Standard 2.0 sections must be objects')
+    return
+  }
+  if (!isSemver(value.version)) add(`${path}.version`, 'INVALID_SEMVER', 'Section version must be semantic')
+  if (value.items !== undefined) {
+    if (!Array.isArray(value.items) || value.items.length > 500) {
+      add(`${path}.items`, 'INVALID_SECTION_ITEMS', 'Section items must be a bounded array')
+      return
+    }
+    value.items.forEach((item, index) => {
+      if (!isRecord(item)) {
+        add(`${path}.items[${index}]`, 'INVALID_SECTION_ITEM', 'Section items must be objects')
+        return
+      }
+      validateItem?.(item, `${path}.items[${index}]`)
+    })
+  }
+}
+
+function validateDependencyGraph(value: unknown, path: string, moduleId: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_DEPENDENCY_GRAPH', 'dependencyGraph must be an object')
+    return
+  }
+  if (!isSemver(value.version)) add(`${path}.version`, 'INVALID_SEMVER', 'dependencyGraph version must be semantic')
+  for (const group of ['requires', 'optional', 'recommended'] as const) {
+    validateDependencyRefs(value[group], `${path}.${group}`, moduleId, add)
+  }
+  for (const group of ['conflicts', 'replaces'] as const) {
+    validateConflictRefs(value[group], `${path}.${group}`, moduleId, add)
+  }
+  if (!Array.isArray(value.provides)) {
+    add(`${path}.provides`, 'INVALID_PROVIDES', 'dependencyGraph.provides must be an array')
+  } else {
+    value.provides.forEach((item, index) => {
+      if (!isRecord(item)) {
+        add(`${path}.provides[${index}]`, 'INVALID_PROVIDE', 'provides entries must be objects')
+        return
+      }
+      checkString(item.id, `${path}.provides[${index}].id`, 1, 220, add)
+      checkString(item.title, `${path}.provides[${index}].title`, 1, 160, add)
+      if (!isSemver(item.version)) add(`${path}.provides[${index}].version`, 'INVALID_SEMVER', 'provided contract version must be semantic')
+      if (!['service', 'api', 'record', 'capability', 'engine', 'integration', 'ui'].includes(String(item.kind))) add(`${path}.provides[${index}].kind`, 'INVALID_PROVIDE_KIND', 'Unsupported provides kind')
+    })
+  }
+}
+
+function validateDependencyRefs(value: unknown, path: string, moduleId: string, add: AddIssue) {
+  if (!Array.isArray(value) || value.length > 120) {
+    add(path, 'INVALID_DEPENDENCY_REFS', `${path} must be a bounded array`)
+    return
+  }
+  value.forEach((dependency, index) => {
+    if (!isRecord(dependency)) {
+      add(`${path}[${index}]`, 'INVALID_DEPENDENCY_REF', 'Dependency references must be objects')
+      return
+    }
+    const hasModule = typeof dependency.moduleId === 'string'
+    const hasProvides = typeof dependency.provides === 'string'
+    if (!hasModule && !hasProvides) add(`${path}[${index}]`, 'MISSING_DEPENDENCY_TARGET', 'Dependency requires moduleId or provides')
+    if (hasModule) {
+      if (!ID_PATTERN.test(String(dependency.moduleId))) add(`${path}[${index}].moduleId`, 'INVALID_MODULE_ID', 'Dependency moduleId must be a lowercase dotted identifier')
+      if (dependency.moduleId === moduleId) add(`${path}[${index}].moduleId`, 'SELF_DEPENDENCY', 'Module cannot depend on itself')
+    }
+    if (hasProvides) checkString(dependency.provides, `${path}[${index}].provides`, 1, 220, add)
+    if (!isSemverRange(dependency.versionRange)) add(`${path}[${index}].versionRange`, 'INVALID_SEMVER_RANGE', 'Dependency versionRange must be semantic')
+    if (dependency.capabilityIds !== undefined) validateStringArray(dependency.capabilityIds, `${path}[${index}].capabilityIds`, 80, add)
+  })
+}
+
+function validateConflictRefs(value: unknown, path: string, moduleId: string, add: AddIssue) {
+  if (!Array.isArray(value) || value.length > 120) {
+    add(path, 'INVALID_DEPENDENCY_REFS', `${path} must be a bounded array`)
+    return
+  }
+  value.forEach((dependency, index) => {
+    if (!isRecord(dependency)) {
+      add(`${path}[${index}]`, 'INVALID_DEPENDENCY_REF', 'Dependency references must be objects')
+      return
+    }
+    checkString(dependency.moduleId, `${path}[${index}].moduleId`, 1, 220, add)
+    if (dependency.moduleId === moduleId) add(`${path}[${index}].moduleId`, 'SELF_DEPENDENCY', 'Module cannot depend on itself')
+    if (dependency.versionRange !== undefined && !isSemverRange(dependency.versionRange)) add(`${path}[${index}].versionRange`, 'INVALID_SEMVER_RANGE', 'Dependency versionRange must be semantic')
+    checkString(dependency.reason, `${path}[${index}].reason`, 1, 500, add)
+  })
+}
+
+function validateService(item: Record<string, unknown>, path: string, moduleId: string, add: AddIssue) {
+  validateNamespacedId(item.id, `${path}.id`, moduleId, add)
+  checkString(item.title, `${path}.title`, 1, 160, add)
+  if (!isSemver(item.version)) add(`${path}.version`, 'INVALID_SEMVER', 'Service version must be semantic')
+  if (!STANDARD_20_SERVICE_KINDS.has(String(item.kind))) add(`${path}.kind`, 'INVALID_SERVICE_KIND', 'Unsupported service kind')
+  checkString(item.contract, `${path}.contract`, 1, 240, add)
+  if (item.permissions !== undefined) validateStringArray(item.permissions, `${path}.permissions`, 80, add)
+  if (item.capabilities !== undefined) validateStringArray(item.capabilities, `${path}.capabilities`, 80, add)
+}
+
+function validateApiOperation(item: Record<string, unknown>, path: string, moduleId: string, add: AddIssue) {
+  validateNamespacedId(item.id, `${path}.id`, moduleId, add)
+  checkString(item.title, `${path}.title`, 1, 160, add)
+  if (!isSemver(item.version)) add(`${path}.version`, 'INVALID_SEMVER', 'API operation version must be semantic')
+  if (!STANDARD_20_API_METHODS.has(String(item.method))) add(`${path}.method`, 'INVALID_API_METHOD', 'Unsupported API method')
+  checkString(item.path, `${path}.path`, 1, 240, add)
+  if (typeof item.path === 'string' && !item.path.startsWith(`/api/modula/${moduleId}/`)) {
+    add(`${path}.path`, 'INVALID_MODULE_API_PATH', `Module APIs must be exposed under /api/modula/${moduleId}/`)
+  }
+  optionalString(item.inputSchema, `${path}.inputSchema`, 1, 240, add)
+  optionalString(item.outputSchema, `${path}.outputSchema`, 1, 240, add)
+  if (!Array.isArray(item.permissions)) add(`${path}.permissions`, 'INVALID_PERMISSIONS', 'API operation permissions must be an array')
+  if (!STANDARD_20_API_SIDE_EFFECTS.has(String(item.sideEffects))) add(`${path}.sideEffects`, 'INVALID_API_SIDE_EFFECTS', 'Unsupported API sideEffects')
+  if (typeof item.idempotent !== 'boolean') add(`${path}.idempotent`, 'INVALID_BOOLEAN', 'idempotent must be boolean')
+}
+
+function validateHook(item: Record<string, unknown>, path: string, moduleId: string, add: AddIssue) {
+  validateNamespacedId(item.id, `${path}.id`, moduleId, add)
+  checkString(item.hook, `${path}.hook`, 1, 160, add)
+  if (!STANDARD_20_HOOK_PHASES.has(String(item.phase))) add(`${path}.phase`, 'INVALID_HOOK_PHASE', 'Hook phase must be before or after')
+  checkString(item.target, `${path}.target`, 1, 220, add)
+  optionalString(item.functionId, `${path}.functionId`, 1, 220, add)
+  if (!POLICY_MODES.has(String(item.policyMode))) add(`${path}.policyMode`, 'INVALID_POLICY_MODE', 'Hook policyMode is required')
+}
+
+function validateCapabilityDiscovery(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_CAPABILITY_DISCOVERY', 'capabilityDiscovery must be an object')
+    return
+  }
+  if (!isSemver(value.version)) add(`${path}.version`, 'INVALID_SEMVER', 'capabilityDiscovery version must be semantic')
+  for (const [key, entry] of Object.entries(value)) {
+    if (key.startsWith('supports') && typeof entry !== 'boolean') add(`${path}.${key}`, 'INVALID_BOOLEAN', `${key} must be boolean`)
+  }
+}
+
+function validatePermissionModel(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_PERMISSION_MODEL', 'permissionModel must be an object')
+    return
+  }
+  if (!isSemver(value.version)) add(`${path}.version`, 'INVALID_SEMVER', 'permissionModel version must be semantic')
+  if (!isRecord(value.categories)) {
+    add(`${path}.categories`, 'INVALID_PERMISSION_CATEGORIES', 'permissionModel.categories must be an object')
+    return
+  }
+  for (const [category, grants] of Object.entries(value.categories)) {
+    if (!MODULE_STANDARD_20_PERMISSION_CATEGORIES.includes(category as any)) add(`${path}.categories.${category}`, 'UNKNOWN_PERMISSION_CATEGORY', `Unknown permission category ${category}`)
+    if (!Array.isArray(grants) || grants.length > 120) {
+      add(`${path}.categories.${category}`, 'INVALID_PERMISSION_GRANTS', 'Permission category grants must be a bounded array')
+      continue
+    }
+    grants.forEach((grant, index) => {
+      if (!isRecord(grant)) {
+        add(`${path}.categories.${category}[${index}]`, 'INVALID_PERMISSION_GRANT', 'Permission grants must be objects')
+        return
+      }
+      checkString(grant.id, `${path}.categories.${category}[${index}].id`, 1, 220, add)
+      if (typeof grant.id === 'string' && grant.id.includes('*')) add(`${path}.categories.${category}[${index}].id`, 'WILDCARD_PERMISSION', 'Wildcard permissions are prohibited')
+      checkString(grant.reason, `${path}.categories.${category}[${index}].reason`, 1, 500, add)
+      if (typeof grant.required !== 'boolean') add(`${path}.categories.${category}[${index}].required`, 'INVALID_BOOLEAN', 'required must be boolean')
+      if (!['low', 'medium', 'high', 'critical', 'restricted'].includes(String(grant.risk))) add(`${path}.categories.${category}[${index}].risk`, 'INVALID_RISK', 'Unsupported permission risk')
+      if (!POLICY_MODES.has(String(grant.policyMode))) add(`${path}.categories.${category}[${index}].policyMode`, 'INVALID_POLICY_MODE', 'Unsupported permission policyMode')
+    })
+  }
+}
+
+function validateJob(item: Record<string, unknown>, path: string, moduleId: string, add: AddIssue) {
+  validateNamespacedId(item.id, `${path}.id`, moduleId, add)
+  checkString(item.title, `${path}.title`, 1, 160, add)
+  if (!STANDARD_20_JOB_KINDS.has(String(item.kind))) add(`${path}.kind`, 'INVALID_JOB_KIND', 'Unsupported background job kind')
+  optionalString(item.schedule, `${path}.schedule`, 1, 120, add)
+  optionalString(item.queue, `${path}.queue`, 1, 120, add)
+  optionalString(item.functionId, `${path}.functionId`, 1, 220, add)
+  if (item.permissions !== undefined) validateStringArray(item.permissions, `${path}.permissions`, 80, add)
+}
+
+function validateStorage(item: Record<string, unknown>, path: string, moduleId: string, add: AddIssue) {
+  validateNamespacedId(item.id, `${path}.id`, moduleId, add)
+  if (!STANDARD_20_STORAGE_KINDS.has(String(item.kind))) add(`${path}.kind`, 'INVALID_STORAGE_KIND', 'Unsupported storage kind')
+  if (!isSemver(item.version)) add(`${path}.version`, 'INVALID_SEMVER', 'Storage declaration version must be semantic')
+  if (item.encrypted !== undefined && typeof item.encrypted !== 'boolean') add(`${path}.encrypted`, 'INVALID_BOOLEAN', 'encrypted must be boolean')
+  optionalString(item.retention, `${path}.retention`, 1, 500, add)
+}
+
+function validateWidget(item: Record<string, unknown>, path: string, moduleId: string, add: AddIssue) {
+  validateNamespacedId(item.id, `${path}.id`, moduleId, add)
+  checkString(item.title, `${path}.title`, 1, 160, add)
+  if (!STANDARD_20_WIDGET_SURFACES.has(String(item.surface))) add(`${path}.surface`, 'INVALID_WIDGET_SURFACE', 'Unsupported widget surface')
+  optionalString(item.viewId, `${path}.viewId`, 1, 220, add)
+  if (item.permissions !== undefined) validateStringArray(item.permissions, `${path}.permissions`, 80, add)
+}
+
+function validateNavigation(item: Record<string, unknown>, path: string, moduleId: string, add: AddIssue) {
+  validateNamespacedId(item.id, `${path}.id`, moduleId, add)
+  checkString(item.title, `${path}.title`, 1, 160, add)
+  if (!STANDARD_20_NAVIGATION_KINDS.has(String(item.kind))) add(`${path}.kind`, 'INVALID_NAVIGATION_KIND', 'Unsupported navigation contribution kind')
+  checkString(item.target, `${path}.target`, 1, 240, add)
+  optionalString(item.surface, `${path}.surface`, 1, 120, add)
+  if (item.permissions !== undefined) validateStringArray(item.permissions, `${path}.permissions`, 80, add)
+}
+
+function validateUiContribution(item: Record<string, unknown>, path: string, moduleId: string, add: AddIssue) {
+  validateNamespacedId(item.id, `${path}.id`, moduleId, add)
+  checkString(item.title, `${path}.title`, 1, 160, add)
+  if (!STANDARD_20_UI_KINDS.has(String(item.kind))) add(`${path}.kind`, 'INVALID_UI_CONTRIBUTION_KIND', 'Unsupported UI contribution kind')
+  checkString(item.target, `${path}.target`, 1, 240, add)
+  checkString(item.contract, `${path}.contract`, 1, 240, add)
+}
+
+function validateAutomation20(item: Record<string, unknown>, path: string, moduleId: string, add: AddIssue) {
+  validateNamespacedId(item.id, `${path}.id`, moduleId, add)
+  checkString(item.title, `${path}.title`, 1, 160, add)
+  for (const field of ['triggers', 'actions', 'conditions'] as const) validateStringArray(item[field], `${path}.${field}`, 120, add)
+}
+
+function validateOffline(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_OFFLINE_DECLARATION', 'offline must be an object')
+    return
+  }
+  if (!isSemver(value.version)) add(`${path}.version`, 'INVALID_SEMVER', 'offline version must be semantic')
+  if (typeof value.capable !== 'boolean') add(`${path}.capable`, 'INVALID_BOOLEAN', 'offline.capable must be boolean')
+  if (value.syncStrategy !== undefined && !STANDARD_20_OFFLINE_SYNC.has(String(value.syncStrategy))) add(`${path}.syncStrategy`, 'INVALID_SYNC_STRATEGY', 'Unsupported offline sync strategy')
+  if (value.conflictStrategy !== undefined && !STANDARD_20_CONFLICT_STRATEGIES.has(String(value.conflictStrategy))) add(`${path}.conflictStrategy`, 'INVALID_CONFLICT_STRATEGY', 'Unsupported conflict strategy')
+  if (value.compression !== undefined && typeof value.compression !== 'boolean') add(`${path}.compression`, 'INVALID_BOOLEAN', 'compression must be boolean')
+  if (value.encryption !== undefined && typeof value.encryption !== 'boolean') add(`${path}.encryption`, 'INVALID_BOOLEAN', 'encryption must be boolean')
+}
+
+function validateRealtime(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_REALTIME_DECLARATION', 'realtime must be an object')
+    return
+  }
+  if (!isSemver(value.version)) add(`${path}.version`, 'INVALID_SEMVER', 'realtime version must be semantic')
+  validateStringArray(value.events, `${path}.events`, 200, add)
+  for (const field of ['presence', 'typing', 'watchers'] as const) {
+    if (value[field] !== undefined && typeof value[field] !== 'boolean') add(`${path}.${field}`, 'INVALID_BOOLEAN', `${field} must be boolean`)
+  }
+  if (value.subscriptions !== undefined) validateStringArray(value.subscriptions, `${path}.subscriptions`, 120, add)
+  if (value.channels !== undefined) validateStringArray(value.channels, `${path}.channels`, 120, add)
+}
+
+function validateVersioning(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_VERSIONING_DECLARATION', 'versioning must be an object')
+    return
+  }
+  if (!isSemver(value.version)) add(`${path}.version`, 'INVALID_SEMVER', 'versioning section version must be semantic')
+  for (const field of ['moduleVersion', 'standardVersion', 'publisherVersion', 'protocolVersion', 'backendVersion', 'schemaVersion', 'manifestVersion', 'aiVersion', 'migrationVersion', 'searchVersion', 'runtimeVersion'] as const) {
+    if (value[field] !== undefined && !isSemver(value[field])) add(`${path}.${field}`, 'INVALID_SEMVER', `${field} must be semantic when provided`)
+  }
+}
+
+function validateCompatibilityMatrix(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_COMPATIBILITY_MATRIX', 'compatibilityMatrix must be an object')
+    return
+  }
+  if (!isSemver(value.version)) add(`${path}.version`, 'INVALID_SEMVER', 'compatibilityMatrix version must be semantic')
+  for (const field of ['modulaVersion', 'greenfieldVersion', 'moduleStandardVersion', 'runtimeVersion', 'backendRuntime', 'connectorRuntime', 'aiRuntime', 'engineRuntime'] as const) {
+    if (value[field] !== undefined && !isSemverRange(value[field])) add(`${path}.${field}`, 'INVALID_SEMVER_RANGE', `${field} must be a semantic version range`)
+  }
+  validateStringEnumArray(value.platforms, `${path}.platforms`, STANDARD_20_COMPAT_PLATFORMS, 5, add)
+}
+
+function validateMarketplace(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_MARKETPLACE_DECLARATION', 'marketplace must be an object')
+    return
+  }
+  if (!isSemver(value.version)) add(`${path}.version`, 'INVALID_SEMVER', 'marketplace version must be semantic')
+  for (const field of ['publisherProfile', 'source', 'repository', 'changelog', 'roadmap', 'support', 'documentation', 'issueTracker'] as const) {
+    optionalString(value[field], `${path}.${field}`, 1, 500, add)
+  }
+  if (value.verifiedBadge !== undefined && typeof value.verifiedBadge !== 'boolean') add(`${path}.verifiedBadge`, 'INVALID_BOOLEAN', 'verifiedBadge must be boolean')
+  if (value.securityScore !== undefined && (typeof value.securityScore !== 'number' || value.securityScore < 0 || value.securityScore > 100)) {
+    add(`${path}.securityScore`, 'INVALID_SECURITY_SCORE', 'securityScore must be 0..100')
+  }
+  if (value.downloads !== undefined && (typeof value.downloads !== 'number' || !Number.isInteger(value.downloads) || value.downloads < 0)) add(`${path}.downloads`, 'INVALID_DOWNLOADS', 'downloads must be a non-negative integer')
+  if (value.requiredRuntimes !== undefined) validateStringArray(value.requiredRuntimes, `${path}.requiredRuntimes`, 80, add)
+  if (value.aiSupport !== undefined && typeof value.aiSupport !== 'boolean') add(`${path}.aiSupport`, 'INVALID_BOOLEAN', 'aiSupport must be boolean')
+}
+
+function validateEngineReadiness(value: unknown, path: string, add: AddIssue) {
+  if (value === undefined) return
+  if (!isRecord(value)) {
+    add(path, 'INVALID_ENGINE_READINESS', 'engineReadiness must be an object')
+    return
+  }
+  if (!isSemver(value.version)) add(`${path}.version`, 'INVALID_SEMVER', 'engineReadiness version must be semantic')
+  validateStringEnumArray(value.engines, `${path}.engines`, STANDARD_20_ENGINES, 20, add)
+}
+
+function validateGenericNamedItem(item: Record<string, unknown>, path: string, moduleId: string, add: AddIssue) {
+  validateNamespacedId(item.id, `${path}.id`, moduleId, add)
+  if (item.title !== undefined) checkString(item.title, `${path}.title`, 1, 160, add)
+  if (item.version !== undefined && !isSemver(item.version)) add(`${path}.version`, 'INVALID_SEMVER', 'Item version must be semantic')
 }
 
 function validateProvenanceEvidence(release: unknown, options: ModulaModuleValidationOptions, add: AddIssue) {

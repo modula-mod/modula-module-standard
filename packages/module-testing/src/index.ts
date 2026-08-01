@@ -4,8 +4,10 @@ import {
   type HostCapability,
   type HostCompatibility,
   type ModulaModuleManifest,
+  extractModuleStandard20Summary,
   negotiateCapabilities,
   negotiateCompatibility,
+  resolveModuleDependencyGraph,
 } from '@modula/module-standard'
 import {validateModulaModuleManifest, type ModulaModuleValidationResult} from '@modula/module-validator'
 
@@ -48,6 +50,8 @@ export type ModuleSandbox = {
     steps: string[]
     reversible: boolean
   }
+  inspectStandard20(manifest: ModulaModuleManifest): ReturnType<typeof extractModuleStandard20Summary>
+  resolveDependencies(manifest: ModulaModuleManifest): ReturnType<typeof resolveModuleDependencyGraph>
 }
 
 const DEFAULT_HOST: HostCompatibility = {
@@ -70,6 +74,25 @@ const DEFAULT_CAPABILITIES = [
   'diagnostics',
   'health',
   'migrations',
+  'services',
+  'apis',
+  'hooks',
+  'metrics',
+  'jobs',
+  'storage',
+  'widgets',
+  'navigation',
+  'ui-contributions',
+  'offline',
+  'realtime',
+  'exports',
+  'imports',
+  'sync',
+  'sharing',
+  'history',
+  'permissions-v2',
+  'marketplace',
+  'engines',
 ]
 
 export function createModuleSandbox(options: ModuleSandboxOptions = {}): ModuleSandbox {
@@ -134,6 +157,13 @@ export function createModuleSandbox(options: ModuleSandboxOptions = {}): ModuleS
         reversible: steps.every(step => step.reversible),
       }
     },
+    inspectStandard20(manifest) {
+      return extractModuleStandard20Summary(manifest as unknown as Record<string, unknown>)
+    },
+    resolveDependencies(manifest) {
+      const record = manifest as unknown as {dependencyGraph?: Parameters<typeof resolveModuleDependencyGraph>[0]}
+      return resolveModuleDependencyGraph(record.dependencyGraph, [])
+    },
   }
 }
 
@@ -153,5 +183,7 @@ export function runModuleStandardTestPlan(manifest: unknown, options: ModuleSand
     backend: sandbox.inspectBackend(validation.manifest),
     health: sandbox.previewHealth(validation.manifest),
     migrations: sandbox.runMigrations(validation.manifest, '0.0.0'),
+    standard20: sandbox.inspectStandard20(validation.manifest),
+    dependencies: sandbox.resolveDependencies(validation.manifest),
   }
 }

@@ -5,6 +5,11 @@ import {dirname, isAbsolute, join} from 'node:path'
 import {pathToFileURL} from 'node:url'
 import {
   DEFAULT_LIFECYCLE_TRANSITIONS,
+  MODULA_MANIFEST_SCHEMA_VERSION,
+  MODULA_MODULE_STANDARD_2_SCHEMA_URI,
+  MODULA_MODULE_STANDARD_VERSION,
+  createDefaultModuleSectionVersions,
+  extractModuleStandard20Summary,
   manifestChecksum,
   type ModulaModuleManifest,
 } from '@modula/module-sdk'
@@ -23,13 +28,30 @@ Usage:
   modula module create <directory> --id <module-id> --name <name>
   modula module validate <manifest.json>
   modula module inspect <manifest.json>
+  modula module doctor <manifest.json>
   modula module test <manifest.json>
+  modula module benchmark <manifest.json>
+  modula module generate <manifest.json>
+  modula module schema
+  modula module docs
   modula module build <manifest.json>
+  modula module bundle <manifest.json>
   modula module pack <manifest.json>
+  modula module release <manifest.json>
   modula module publish <manifest.json>
+  modula module sign <manifest.json>
   modula module diff <old-manifest.json> <new-manifest.json>
   modula module migrate <manifest.json> --from <data-schema-version>
+  modula module rollback <manifest.json> --to <data-schema-version>
+  modula module upgrade <manifest.json>
   modula module upgrade-standard <manifest.json>
+  modula module ai <manifest.json>
+  modula module search <manifest.json>
+  modula module events <manifest.json>
+  modula module permissions <manifest.json>
+  modula module health <manifest.json>
+  modula module telemetry <manifest.json>
+  modula module install <manifest.json>
   modula module backend validate <manifest.json>
   modula module backend discover <manifest.json> [--origin <https-origin>]
   modula module backend health <manifest.json> [--origin <https-origin>]
@@ -51,13 +73,30 @@ export async function run(rawArgs: string[]): Promise<CommandResult> {
     if (command === 'create') return createCommand(args.slice(1))
     if (command === 'validate') return validateCommand(first)
     if (command === 'inspect') return inspectCommand(first)
+    if (command === 'doctor') return doctorCommand(first)
     if (command === 'test') return testCommand(first)
+    if (command === 'benchmark') return benchmarkCommand(first)
+    if (command === 'generate') return generateCommand(first)
+    if (command === 'schema') return schemaCommand()
+    if (command === 'docs') return docsCommand()
     if (command === 'build') return buildCommand(first)
+    if (command === 'bundle') return packCommand(first)
     if (command === 'pack') return packCommand(first)
+    if (command === 'release') return releaseCommand(first)
     if (command === 'publish') return publishCommand(first)
+    if (command === 'sign') return signCommand(first)
     if (command === 'diff') return diffCommand(first, second)
     if (command === 'migrate') return migrateCommand(args.slice(1))
+    if (command === 'rollback') return rollbackCommand(args.slice(1))
+    if (command === 'upgrade') return upgradeStandardCommand(first)
     if (command === 'upgrade-standard') return upgradeStandardCommand(first)
+    if (command === 'ai') return sectionCommand(first, 'ai')
+    if (command === 'search') return sectionCommand(first, 'search')
+    if (command === 'events') return sectionCommand(first, 'events')
+    if (command === 'permissions') return sectionCommand(first, 'permissions')
+    if (command === 'health') return sectionCommand(first, 'health')
+    if (command === 'telemetry') return sectionCommand(first, 'telemetry')
+    if (command === 'install') return installCommand(first)
     if (command === 'backend') return backendCommand(args.slice(1))
     return {exitCode: 1, stderr: `Unknown command: ${rawArgs.join(' ')}\n\n${HELP_TEXT}`}
   } catch (error) {
@@ -122,6 +161,7 @@ async function inspectCommand(manifestPath: string | undefined): Promise<Command
     return {exitCode: 1, stderr: `Cannot inspect invalid manifest: ${manifestPath}\n${formatIssues(result.issues)}\n`}
   }
   const item = result.manifest
+  const summary = extractModuleStandard20Summary(item as unknown as Record<string, unknown>)
   return ok(`Modula module inspection
   id: ${item.id}
   name: ${item.name}
@@ -138,6 +178,30 @@ async function inspectCommand(manifestPath: string | undefined): Promise<Command
   search: ${item.search.length}
   health: ${item.health.status}
   trust: ${item.trust.level}
+  services: ${summary.services}
+  apiOperations: ${summary.apis}
+  hooks: ${summary.hooks}
+  jobs: ${summary.jobs}
+  widgets: ${summary.widgets}
+  engines: ${summary.engines.length ? summary.engines.join(', ') : 'none'}
+`)
+}
+
+async function doctorCommand(manifestPath: string | undefined): Promise<CommandResult> {
+  const manifest = await readManifestArg(manifestPath)
+  const result = runModuleStandardTestPlan(manifest)
+  if (!result.valid) return {exitCode: 1, stderr: `Module doctor failed\n${formatIssues(result.validation.issues)}\n`}
+  if (!result.validation.manifest || !result.health || !result.diagnostics) return {exitCode: 1, stderr: 'Module doctor did not produce complete inspection output\n'}
+  const validatedManifest = result.validation.manifest
+  const summary = extractModuleStandard20Summary(validatedManifest as unknown as Record<string, unknown>)
+  return ok(`Module doctor passed
+  standardVersion: ${validatedManifest.standardVersion}
+  services: ${summary.services}
+  apiOperations: ${summary.apis}
+  hooks: ${summary.hooks}
+  capabilityFlags: ${Object.keys(summary.capabilityFlags).length}
+  health: ${result.health.status}
+  diagnostics: ${result.diagnostics.components.length}
 `)
 }
 
@@ -157,6 +221,51 @@ async function testCommand(manifestPath: string | undefined): Promise<CommandRes
   consumedEvents: ${result.events.consumed.length}
   searchDefinitions: ${result.search.length}
   health: ${result.health.status}
+`)
+}
+
+async function benchmarkCommand(manifestPath: string | undefined): Promise<CommandResult> {
+  const started = performance.now()
+  const manifest = await readManifestArg(manifestPath)
+  const result = validateModulaModuleManifest(manifest)
+  const elapsedMs = Math.round((performance.now() - started) * 100) / 100
+  if (!result.valid) return {exitCode: 1, stderr: `Module benchmark validation failed in ${elapsedMs}ms\n${formatIssues(result.issues)}\n`}
+  return ok(`Module benchmark passed
+  validationMs: ${elapsedMs}
+  records: ${result.manifest!.records.length}
+  functions: ${result.manifest!.functions.length}
+  events: ${result.manifest!.events.length}
+`)
+}
+
+async function generateCommand(manifestPath: string | undefined): Promise<CommandResult> {
+  const manifest = await requireValidManifest(manifestPath)
+  return ok(`Generated metadata preview
+  openapi: /api/modula/${manifest.id}/openapi.json
+  jsonSchema: ${MODULA_MODULE_STANDARD_2_SCHEMA_URI}
+  typescript: ${manifest.id}.d.ts
+  docs: ${manifest.id}.module-standard.md
+  migrationGuide: ${manifest.id}.migration.md
+`)
+}
+
+function schemaCommand(): CommandResult {
+  return ok(`Modula Module Standard schema
+  standardVersion: ${MODULA_MODULE_STANDARD_VERSION}
+  manifestSchemaVersion: ${MODULA_MANIFEST_SCHEMA_VERSION}
+  uri: ${MODULA_MODULE_STANDARD_2_SCHEMA_URI}
+  file: schemas/module-manifest-2.0.schema.json
+`)
+}
+
+function docsCommand(): CommandResult {
+  return ok(`Modula Module Standard documentation
+  standard: docs/module-standard.md
+  standard20: docs/module-standard-2.0.md
+  migration: docs/migration-standard-2.0.md
+  sdk: docs/module-sdk.md
+  validator: docs/module-validator.md
+  backend: docs/module-backends.md
 `)
 }
 
@@ -183,14 +292,35 @@ async function packCommand(manifestPath: string | undefined): Promise<CommandRes
 }
 
 async function publishCommand(manifestPath: string | undefined): Promise<CommandResult> {
-  const validation = await validateCommand(manifestPath)
-  if (validation.exitCode !== 0) return validation
-  return {
-    exitCode: 1,
-    stderr: `Publish is intentionally not configured in this foundation package.
-Set a reviewed registry target and signing workflow before enabling modula module publish.
-`,
-  }
+  const manifest = await requireValidManifest(manifestPath)
+  return ok(`Module publish preflight passed
+  id: ${manifest.id}
+  version: ${manifest.moduleVersion}
+  checksum: ${manifestChecksum(manifest)}
+  registryTarget: ${process.env.MODULA_REGISTRY_URL ? 'configured' : 'not configured'}
+  sideEffects: none
+`)
+}
+
+async function releaseCommand(manifestPath: string | undefined): Promise<CommandResult> {
+  const manifest = await requireValidManifest(manifestPath)
+  return ok(`Module release preflight passed
+  id: ${manifest.id}
+  version: ${manifest.moduleVersion}
+  package: ${manifest.slug}-${manifest.moduleVersion}.tgz
+  checksum: ${manifestChecksum(manifest)}
+  reviewStatus: ${manifest.release.reviewStatus}
+`)
+}
+
+async function signCommand(manifestPath: string | undefined): Promise<CommandResult> {
+  const manifest = await requireValidManifest(manifestPath)
+  return ok(`Module signing preflight passed
+  id: ${manifest.id}
+  checksum: ${manifestChecksum(manifest)}
+  signed: ${manifest.release.signing.signed ? 'yes' : 'no'}
+  keyId: ${manifest.release.signing.keyId ?? 'not configured'}
+`)
 }
 
 async function diffCommand(leftPath: string | undefined, rightPath: string | undefined): Promise<CommandResult> {
@@ -222,6 +352,22 @@ async function migrateCommand(args: string[]): Promise<CommandResult> {
 `)
 }
 
+async function rollbackCommand(args: string[]): Promise<CommandResult> {
+  const manifest = await readManifestArg(args[0])
+  const to = flagValue(args, '--to') ?? '0.0.0'
+  const result = runModuleStandardTestPlan(manifest)
+  if (!result.valid) return {exitCode: 1, stderr: `Cannot rollback invalid manifest\n${formatIssues(result.validation.issues)}\n`}
+  if (!result.validation.manifest) return {exitCode: 1, stderr: 'Module rollback did not produce a validated manifest\n'}
+  const validatedManifest = result.validation.manifest
+  const reversible = validatedManifest.migrations.steps.every(step => step.reversible)
+  return ok(`Module rollback plan
+  from: ${validatedManifest.dataSchemaVersion}
+  to: ${to}
+  reversible: ${reversible ? 'yes' : 'no'}
+  steps: ${validatedManifest.migrations.steps.map(step => step.id).join(', ') || 'none'}
+`)
+}
+
 async function upgradeStandardCommand(manifestPath: string | undefined): Promise<CommandResult> {
   const manifest = await readManifestArg(manifestPath)
   const result = validateModulaModuleManifest(manifest)
@@ -236,6 +382,53 @@ Run modula module inspect and migrate the four version fields plus missing contr
 ${formatIssues(result.issues)}
 `,
   }
+}
+
+async function sectionCommand(manifestPath: string | undefined, section: 'ai' | 'search' | 'events' | 'permissions' | 'health' | 'telemetry'): Promise<CommandResult> {
+  const manifest = await requireValidManifest(manifestPath)
+  const summary = extractModuleStandard20Summary(manifest as unknown as Record<string, unknown>)
+  if (section === 'ai') return ok(`Module AI contracts
+  integrations: ${manifest.ai.length}
+  productActions: ${manifest.ai.reduce((count, item) => count + (item.productActions?.length ?? 0), 0)}
+  supportsAI: ${summary.capabilityFlags.supportsAI === true ? 'yes' : 'no'}
+`)
+  if (section === 'search') return ok(`Module search contracts
+  definitions: ${manifest.search.length}
+  supportsSearch: ${summary.capabilityFlags.supportsSearch === true ? 'yes' : 'no'}
+`)
+  if (section === 'events') return ok(`Module event contracts
+  emitted: ${manifest.events.filter(event => event.direction === 'emitted').length}
+  consumed: ${manifest.events.filter(event => event.direction === 'consumed').length}
+  eventBus: ${versionedItemCount((manifest as unknown as Record<string, unknown>).eventBus)}
+`)
+  if (section === 'permissions') return ok(`Module permission contracts
+  legacyPermissions: ${manifest.permissions.length}
+  permissionCategories: ${permissionCategoryCount((manifest as unknown as Record<string, unknown>).permissionModel)}
+`)
+  if (section === 'health') return ok(`Module health contracts
+  status: ${manifest.health.status}
+  checks: ${manifest.health.checkDefinitions.length}
+  healthModel: ${versionedItemCount((manifest as unknown as Record<string, unknown>).healthModel)}
+`)
+  return ok(`Module telemetry contracts
+  metrics: ${summary.metrics}
+  telemetry: ${versionedItemCount((manifest as unknown as Record<string, unknown>).telemetry)}
+`)
+}
+
+async function installCommand(manifestPath: string | undefined): Promise<CommandResult> {
+  const manifest = await requireValidManifest(manifestPath)
+  const summary = extractModuleStandard20Summary(manifest as unknown as Record<string, unknown>)
+  return ok(`Module install preflight
+  id: ${manifest.id}
+  version: ${manifest.moduleVersion}
+  requires: ${summary.dependencies.requires}
+  optional: ${summary.dependencies.optional}
+  recommended: ${summary.dependencies.recommended}
+  conflicts: ${summary.dependencies.conflicts}
+  permissions: ${manifest.permissions.length}
+  sideEffects: none
+`)
 }
 
 async function backendCommand(args: string[]): Promise<CommandResult> {
@@ -311,12 +504,17 @@ async function backendMockCommand(directory: string | undefined): Promise<Comman
 }
 
 async function requireValidBackendManifest(manifestPath: string | undefined): Promise<ModulaModuleManifest> {
+  const manifest = await requireValidManifest(manifestPath)
+  if (!manifest.backend || manifest.backend.mode === 'greenfield-managed' || manifest.backend.mode === 'frontend-only') {
+    throw new Error('Backend discovery requires a module-managed or hybrid backend declaration')
+  }
+  return manifest
+}
+
+async function requireValidManifest(manifestPath: string | undefined): Promise<ModulaModuleManifest> {
   const manifest = await readManifestArg(manifestPath)
   const result = validateModulaModuleManifest(manifest)
   if (!result.valid || !result.manifest) throw new Error(`Invalid manifest:\n${formatIssues(result.issues)}`)
-  if (!result.manifest.backend || result.manifest.backend.mode === 'greenfield-managed' || result.manifest.backend.mode === 'frontend-only') {
-    throw new Error('Backend discovery requires a module-managed or hybrid backend declaration')
-  }
   return result.manifest
 }
 
@@ -373,18 +571,18 @@ function createTemplateManifest(moduleId: string, slug: string, name: string): M
   const publisher = {id: 'example', name: 'Example Publisher', website: 'https://example.com'}
   const recordId = `${moduleId}.record.item`
   const functionId = `${moduleId}.function.create-item`
-  return {
-    schemaVersion: '1.2.0',
-    standardVersion: '1.2.0',
+  const manifest = {
+    schemaVersion: MODULA_MANIFEST_SCHEMA_VERSION,
+    standardVersion: MODULA_MODULE_STANDARD_VERSION,
     moduleVersion: '1.0.0',
-    manifestSchemaVersion: '1.2.0',
+    manifestSchemaVersion: MODULA_MANIFEST_SCHEMA_VERSION,
     dataSchemaVersion: '1.0.0',
     id: moduleId,
     slug,
     name,
-    description: `${name} generated module template.`,
+    description: `${name} generated Module Standard 2.0 template.`,
     publisher,
-    compatibility: {host: '^1.0.0', runtime: '^1.0.0', standard: '^1.0.0', platforms: ['web', 'ios', 'android']},
+    compatibility: {host: '^1.0.0', runtime: '^1.0.0', standard: '^2.0.0', platforms: ['web', 'ios', 'android']},
     lifecycle: {executionMode: 'declarative', defaultState: 'installed', allowedTransitions: DEFAULT_LIFECYCLE_TRANSITIONS, uninstall: {dataPolicy: 'retain', requiresConfirmation: true}},
     permissions: [{id: 'records:item:read', reason: 'Read module item records.', required: true, risk: 'low', policyMode: 'observe'}],
     capabilities: [
@@ -392,6 +590,11 @@ function createTemplateManifest(moduleId: string, slug: string, name: string): M
       {id: 'views', reason: 'Render declarative views.', required: true},
       {id: 'functions', reason: 'Expose declarative function contracts.', required: true},
       {id: 'search', reason: 'Index public-safe projections.', required: false, degradedBehavior: 'Module remains available without universal search.'},
+      {id: 'services', reason: 'Publish discoverable module services.', required: false, degradedBehavior: 'Other modules cannot discover service contracts.'},
+      {id: 'apis', reason: 'Expose Greenfield-routed module API contracts.', required: false, degradedBehavior: 'Other modules use records and actions only.'},
+      {id: 'hooks', reason: 'Declare lifecycle and record hooks.', required: false, degradedBehavior: 'No module hook subscriptions are registered.'},
+      {id: 'jobs', reason: 'Declare host-managed background jobs.', required: false, degradedBehavior: 'Background work must be manually requested.'},
+      {id: 'widgets', reason: 'Contribute profile and Board widgets.', required: false, degradedBehavior: 'Module opens through routes only.'},
     ],
     records: [{
       id: recordId,
@@ -420,7 +623,42 @@ function createTemplateManifest(moduleId: string, slug: string, name: string): M
     release: {repository: `modula-mod/${slug}`, commitSha: '0123456789abcdef0123456789abcdef01234567', checksum: '2'.repeat(64), licenseEvidence: ['LICENSE'], signing: {signed: false}, channel: 'dev', reviewStatus: 'unreviewed', securityAdvisories: []},
     trust: {publisher, level: 'untrusted', provenance: {sourceVerified: false, checksumVerified: false, signatureVerified: false}, review: {status: 'unreviewed', evidence: []}, security: {advisories: []}},
     backend: {mode: 'greenfield-managed'},
-  }
+    sectionVersions: createDefaultModuleSectionVersions(),
+    identity: {version: '2.0.0', metadata: {moduleId, slug, publisherId: publisher.id}},
+    dependencyGraph: {version: '2.0.0', requires: [], optional: [], recommended: [], conflicts: [], replaces: [], provides: [{id: `${moduleId}.records.item`, title: `${name} item records`, version: '1.0.0', kind: 'record'}]},
+    serviceRegistry: {version: '2.0.0', items: [{id: `${moduleId}.service.search`, title: 'Search Service', version: '1.0.0', kind: 'search', contract: `${moduleId}.contract.search`, permissions: ['records:item:read'], capabilities: ['search']}]},
+    apiRegistry: {version: '2.0.0', items: [{id: `${moduleId}.api.create-item`, title: 'Create Item API', version: '1.0.0', method: 'POST', path: `/api/modula/${moduleId}/items`, inputSchema: `${moduleId}.schema.item.input`, outputSchema: `${moduleId}.schema.item.output`, permissions: ['records:item:read'], sideEffects: 'write', idempotent: true}]},
+    eventBus: {version: '2.0.0', items: [{id: `${moduleId}.event-contract.item-created`, title: 'Item Created', version: '1.0.0', status: 'healthy'}]},
+    hookRegistry: {version: '2.0.0', items: [{id: `${moduleId}.hook.before-create-record`, hook: 'BeforeCreateRecord', phase: 'before', target: `${moduleId}.record.item`, policyMode: 'observe'}]},
+    capabilityDiscovery: {version: '2.0.0', supportsSearch: true, supportsExport: true, supportsAI: false, supportsOffline: false, supportsRealtime: false, supportsNotifications: false, supportsWidgets: true, supportsAutomation: false, supportsSync: false, supportsHistory: true, supportsSharing: false, supportsEncryption: false, supportsMedia: false, supportsComments: false, supportsPresence: false, supportsVoice: false, supportsVideo: false, supportsBackend: true, supportsCustomBackend: false, supportsSelfHosted: false},
+    healthModel: {version: '2.0.0', items: [{id: `${moduleId}.health.manifest`, status: 'healthy'}]},
+    diagnosticsModel: {version: '2.0.0', items: [{id: `${moduleId}.diagnostics.manifest`, title: 'Manifest diagnostics'}]},
+    metrics: {version: '2.0.0', items: [{id: `${moduleId}.metric.open-count`, title: 'Open count', version: '1.0.0'}]},
+    permissionModel: {version: '2.0.0', categories: {data: [{id: 'records:item:read', reason: 'Read module item records.', required: true, risk: 'low', policyMode: 'observe'}]}},
+    jobRegistry: {version: '2.0.0', items: [{id: `${moduleId}.job.reindex`, title: 'Reindex items', kind: 'reindex', functionId}]},
+    storageModel: {version: '2.0.0', items: [{id: `${moduleId}.storage.records`, kind: 'structured-records', version: '1.0.0', encrypted: false, retention: 'retain'}]},
+    widgetRegistry: {version: '2.0.0', items: [{id: `${moduleId}.widget.board`, title: `${name} Board`, surface: 'board', viewId: `${moduleId}.view.collection`, permissions: ['records:item:read']}]},
+    navigationRegistry: {version: '2.0.0', items: [{id: `${moduleId}.navigation.route`, title: name, kind: 'route', target: `/module/${moduleId}`, surface: 'module'}]},
+    uiContributions: {version: '2.0.0', items: [{id: `${moduleId}.ui.board-card`, title: `${name} card`, kind: 'board-card', target: 'board', contract: `${moduleId}.contract.board-card`}]},
+    automationRegistry: {version: '2.0.0', items: []},
+    offline: {version: '2.0.0', capable: false, syncStrategy: 'none'},
+    realtime: {version: '2.0.0', events: ['item.created'], presence: false, typing: false, watchers: false},
+    versioning: {version: '2.0.0', moduleVersion: '1.0.0', standardVersion: '2.0.0', schemaVersion: '1.0.0', manifestVersion: '2.0.0', runtimeVersion: '1.0.0'},
+    compatibilityMatrix: {version: '2.0.0', modulaVersion: '^1.0.0', greenfieldVersion: '^1.0.0', moduleStandardVersion: '^2.0.0', platforms: ['web', 'ios', 'android']},
+    marketplace: {version: '2.0.0', publisherProfile: publisher.website, verifiedBadge: false, license: 'UNLICENSED', repository: `modula-mod/${slug}`, pricing: 'free', requiredRuntimes: ['greenfield'], aiSupport: false, backendMode: 'greenfield-managed'},
+    engineReadiness: {version: '2.0.0', engines: ['declarative-ui', 'records', 'actions', 'functions']},
+    exports: {version: '2.0.0', items: []},
+    imports: {version: '2.0.0', items: []},
+    synchronization: {version: '2.0.0', items: []},
+    integrations: {version: '2.0.0', items: []},
+    billing: {version: '2.0.0', items: []},
+    telemetry: {version: '2.0.0', items: []},
+    accessibility: {version: '2.0.0', items: []},
+    localization: {version: '2.0.0', items: []},
+    appearance: {version: '2.0.0', items: []},
+    onboarding: {version: '2.0.0', items: []},
+  } as ModulaModuleManifest & Record<string, unknown>
+  return manifest
 }
 
 function flagValue(args: string[], flag: string): string | undefined {
@@ -434,6 +672,17 @@ function compareField(left: Record<string, unknown>, right: Record<string, unkno
 
 function isManifestLike(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function versionedItemCount(value: unknown): number {
+  if (!isManifestLike(value)) return 0
+  return Array.isArray(value.items) ? value.items.length : 0
+}
+
+function permissionCategoryCount(value: unknown): number {
+  if (!isManifestLike(value)) return 0
+  const categories = value.categories
+  return isManifestLike(categories) ? Object.keys(categories).length : 0
 }
 
 function formatIssues(issues: Array<{path: string; code: string; message: string; severity?: string}>): string {

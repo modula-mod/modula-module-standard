@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import {mkdtemp, readFile, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {vaultNotesManifestFixture} from '../packages/module-fixtures/dist/index.js'
+import {vaultNotesManifestFixture, vaultNotesStandard20ManifestFixture} from '../packages/module-fixtures/dist/index.js'
 import {referenceModuleBackendDefinition, referenceModuleBackendDiscovery} from '../packages/module-backend-fixtures/dist/index.js'
 import {validateModuleBackendDiscovery} from '../packages/module-backend-protocol/dist/index.js'
 import {createInMemoryModuleBackend, runModuleBackendConformancePlan} from '../packages/module-backend-testing/dist/index.js'
@@ -10,6 +10,7 @@ import {
   isLifecycleTransitionAllowed,
   negotiateCapabilities,
   negotiateCompatibility,
+  resolveModuleDependencyGraph,
 } from '../packages/module-standard/dist/index.js'
 import {run as runCli} from '../packages/create-module/dist/cli.js'
 import {runModuleStandardTestPlan} from '../packages/module-testing/dist/index.js'
@@ -19,8 +20,16 @@ const templateManifest = JSON.parse(await readFile(new URL('../templates/basic-m
 const exampleManifest = JSON.parse(await readFile(new URL('../examples/vault-notes/manifest.json', import.meta.url), 'utf8'))
 
 assert.equal(validateModulaModuleManifest(vaultNotesManifestFixture).valid, true, 'fixture manifest validates')
+assert.equal(validateModulaModuleManifest(vaultNotesStandard20ManifestFixture).valid, true, 'Standard 2.0 fixture manifest validates')
 assert.equal(validateModulaModuleManifest(templateManifest).valid, true, 'template manifest validates')
 assert.equal(validateModulaModuleManifest(exampleManifest).valid, true, 'example manifest validates')
+
+const standard20Graph = resolveModuleDependencyGraph(vaultNotesStandard20ManifestFixture.dependencyGraph, [
+  {moduleId: 'digital.modula.notifications', version: '1.0.0', installed: true, provides: ['digital.modula.notifications']},
+  {moduleId: 'digital.modula.search', version: '1.1.0', installed: true, provides: ['digital.modula.search']},
+])
+assert.equal(standard20Graph.installable, true, 'Standard 2.0 dependency graph resolves optional and recommended providers')
+assert.equal(standard20Graph.provides.length, 2, 'Standard 2.0 provided contracts are discoverable')
 
 const backendManifest = structuredClone(vaultNotesManifestFixture)
 backendManifest.schemaVersion = '1.1.0'
@@ -150,6 +159,7 @@ assert.equal(sandboxResult.valid, true, 'sandbox validates manifest with optiona
 assert.equal(sandboxResult.negotiation.capabilities.canEnable, true, 'sandbox capability negotiation allows optional degradation')
 assert.ok(sandboxResult.events.emitted.includes('note.created'), 'sandbox inspects emitted events')
 assert.equal(sandboxResult.health.status, 'healthy', 'sandbox previews health')
+assert.equal(runModuleStandardTestPlan(vaultNotesStandard20ManifestFixture).standard20.services, 6, 'sandbox inspects Standard 2.0 services')
 
 const tempDir = await mkdtemp(join(tmpdir(), 'modula-module-standard-'))
 try {
@@ -157,9 +167,14 @@ try {
   assert.equal(createResult.exitCode, 0, 'CLI create succeeds')
   const validateResult = await runCli(['module', 'validate', join(tempDir, 'manifest.json')])
   assert.equal(validateResult.exitCode, 0, 'CLI validates generated template')
-  assert.match(validateResult.stdout, /standardVersion: 1\.2\.0/, 'CLI generated template uses Standard 1.2')
+  assert.match(validateResult.stdout, /standardVersion: 2\.0\.0/, 'CLI generated template uses Standard 2.0')
   const inspectResult = await runCli(['module', 'inspect', join(tempDir, 'manifest.json')])
   assert.equal(inspectResult.exitCode, 0, 'CLI inspect succeeds')
+  assert.match(inspectResult.stdout, /apiOperations: 1/, 'CLI inspect reports Standard 2.0 API operations')
+  const doctorResult = await runCli(['module', 'doctor', join(tempDir, 'manifest.json')])
+  assert.equal(doctorResult.exitCode, 0, 'CLI doctor succeeds')
+  const schemaResult = await runCli(['module', 'schema'])
+  assert.equal(schemaResult.exitCode, 0, 'CLI schema succeeds')
   const testResult = await runCli(['module', 'test', join(tempDir, 'manifest.json')])
   assert.equal(testResult.exitCode, 0, 'CLI sandbox test succeeds')
   const backendValidateResult = await runCli(['module', 'backend', 'validate', join(tempDir, 'manifest.json')])

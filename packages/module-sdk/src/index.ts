@@ -2,7 +2,9 @@ import {
   DEFAULT_LIFECYCLE_TRANSITIONS,
   MODULA_DATA_SCHEMA_VERSION,
   MODULA_MANIFEST_SCHEMA_VERSION,
+  MODULA_MODULE_STANDARD_2_VERSION,
   MODULA_MODULE_STANDARD_VERSION,
+  createDefaultModuleSectionVersions,
   type ActionDefinitions,
   type AIIntegrationDefinitions,
   type AutomationDefinitions,
@@ -30,6 +32,26 @@ import {
   type SettingsDefinitions,
   type TrustMetadata,
   type ViewDefinitions,
+  type ModuleStandard20ApiOperation,
+  type ModuleStandard20Automation,
+  type ModuleStandard20CapabilityDiscovery,
+  type ModuleStandard20CompatibilityMatrix,
+  type ModuleStandard20DependencyGraph,
+  type ModuleStandard20EngineReadiness,
+  type ModuleStandard20Hook,
+  type ModuleStandard20Job,
+  type ModuleStandard20ManifestExtensions,
+  type ModuleStandard20MarketplaceDeclaration,
+  type ModuleStandard20NavigationContribution,
+  type ModuleStandard20OfflineDeclaration,
+  type ModuleStandard20PermissionModel,
+  type ModuleStandard20RealtimeDeclaration,
+  type ModuleStandard20Service,
+  type ModuleStandard20StorageDeclaration,
+  type ModuleStandard20UiContribution,
+  type ModuleStandard20VersionedSection,
+  type ModuleStandard20VersioningDeclaration,
+  type ModuleStandard20Widget,
   manifestChecksum,
 } from '@modula/module-standard'
 import {validateModulaModuleManifest} from '@modula/module-validator'
@@ -40,19 +62,24 @@ export * from '@modula/module-validator'
 export type DefineModuleInput = Omit<
   ModulaModuleManifest,
   'schemaVersion' | 'standardVersion' | 'manifestSchemaVersion' | 'dataSchemaVersion'
-> & {
+> & Partial<ModuleStandard20ManifestExtensions> & {
   standardVersion?: string
   manifestSchemaVersion?: string
   dataSchemaVersion?: string
 }
 
 export function defineModule(input: DefineModuleInput): ModulaModuleManifest {
+  const standardVersion = input.standardVersion ?? MODULA_MODULE_STANDARD_VERSION
+  const manifestSchemaVersion = input.manifestSchemaVersion ?? (standardVersion === MODULA_MODULE_STANDARD_2_VERSION ? MODULA_MANIFEST_SCHEMA_VERSION : standardVersion)
   const manifest: ModulaModuleManifest = {
-    schemaVersion: MODULA_MANIFEST_SCHEMA_VERSION,
-    standardVersion: input.standardVersion ?? MODULA_MODULE_STANDARD_VERSION,
-    manifestSchemaVersion: input.manifestSchemaVersion ?? MODULA_MANIFEST_SCHEMA_VERSION,
+    schemaVersion: manifestSchemaVersion,
+    standardVersion,
+    manifestSchemaVersion,
     dataSchemaVersion: input.dataSchemaVersion ?? MODULA_DATA_SCHEMA_VERSION,
     ...input,
+  } as ModulaModuleManifest
+  if (standardVersion === MODULA_MODULE_STANDARD_2_VERSION && (manifest as Record<string, unknown>).sectionVersions === undefined) {
+    ;(manifest as Record<string, unknown>).sectionVersions = createDefaultModuleSectionVersions()
   }
   const result = validateModulaModuleManifest(manifest)
   if (!result.valid) {
@@ -74,6 +101,250 @@ export function definePermission(id: string, reason: string, overrides: Partial<
 
 export function defineCapability(id: Capability['id'], reason: string, required = true, degradedBehavior?: string): Capability {
   return {id, reason, required, degradedBehavior}
+}
+
+export function defineDependencyGraph(overrides: Partial<ModuleStandard20DependencyGraph> = {}): ModuleStandard20DependencyGraph {
+  return {
+    version: overrides.version ?? MODULA_MODULE_STANDARD_2_VERSION,
+    requires: overrides.requires ?? [],
+    optional: overrides.optional ?? [],
+    recommended: overrides.recommended ?? [],
+    conflicts: overrides.conflicts ?? [],
+    replaces: overrides.replaces ?? [],
+    provides: overrides.provides ?? [],
+  }
+}
+
+export function defineService(moduleId: string, name: string, overrides: Partial<ModuleStandard20Service> = {}): ModuleStandard20Service {
+  return {
+    id: overrides.id ?? namespace(moduleId, 'service', name),
+    title: overrides.title ?? titleize(name),
+    version: overrides.version ?? '1.0.0',
+    kind: overrides.kind ?? 'custom',
+    contract: overrides.contract ?? namespace(moduleId, 'service-contract', name),
+    permissions: overrides.permissions ?? [],
+    capabilities: overrides.capabilities ?? [],
+  }
+}
+
+export function defineApiOperation(moduleId: string, name: string, overrides: Partial<ModuleStandard20ApiOperation> = {}): ModuleStandard20ApiOperation {
+  return {
+    id: overrides.id ?? namespace(moduleId, 'api', name),
+    title: overrides.title ?? titleize(name),
+    version: overrides.version ?? '1.0.0',
+    method: overrides.method ?? 'POST',
+    path: overrides.path ?? `/api/modula/${moduleId}/${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+    inputSchema: overrides.inputSchema,
+    outputSchema: overrides.outputSchema,
+    permissions: overrides.permissions ?? [],
+    sideEffects: overrides.sideEffects ?? 'write',
+    idempotent: overrides.idempotent ?? true,
+  }
+}
+
+export function defineHook(moduleId: string, hook: string, overrides: Partial<ModuleStandard20Hook> = {}): ModuleStandard20Hook {
+  const suffix = hook.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+  return {
+    id: overrides.id ?? namespace(moduleId, 'hook', suffix),
+    hook,
+    phase: overrides.phase ?? (hook.toLowerCase().startsWith('after') ? 'after' : 'before'),
+    target: overrides.target ?? moduleId,
+    functionId: overrides.functionId,
+    policyMode: overrides.policyMode ?? 'observe',
+  }
+}
+
+export function defineCapabilityDiscovery(overrides: Partial<ModuleStandard20CapabilityDiscovery> = {}): ModuleStandard20CapabilityDiscovery {
+  return {
+    version: overrides.version ?? MODULA_MODULE_STANDARD_2_VERSION,
+    supportsSearch: overrides.supportsSearch ?? false,
+    supportsExport: overrides.supportsExport ?? false,
+    supportsAI: overrides.supportsAI ?? false,
+    supportsOffline: overrides.supportsOffline ?? false,
+    supportsRealtime: overrides.supportsRealtime ?? false,
+    supportsNotifications: overrides.supportsNotifications ?? false,
+    supportsWidgets: overrides.supportsWidgets ?? false,
+    supportsAutomation: overrides.supportsAutomation ?? false,
+    supportsSync: overrides.supportsSync ?? false,
+    supportsHistory: overrides.supportsHistory ?? false,
+    supportsSharing: overrides.supportsSharing ?? false,
+    supportsEncryption: overrides.supportsEncryption ?? false,
+    supportsMedia: overrides.supportsMedia ?? false,
+    supportsComments: overrides.supportsComments ?? false,
+    supportsPresence: overrides.supportsPresence ?? false,
+    supportsVoice: overrides.supportsVoice ?? false,
+    supportsVideo: overrides.supportsVideo ?? false,
+    supportsBackend: overrides.supportsBackend ?? false,
+    supportsCustomBackend: overrides.supportsCustomBackend ?? false,
+    supportsSelfHosted: overrides.supportsSelfHosted ?? false,
+  }
+}
+
+export function definePermissionModel(categories: ModuleStandard20PermissionModel['categories'], version = MODULA_MODULE_STANDARD_2_VERSION): ModuleStandard20PermissionModel {
+  return {version, categories}
+}
+
+export function defineJob(moduleId: string, name: string, overrides: Partial<ModuleStandard20Job> = {}): ModuleStandard20Job {
+  return {
+    id: overrides.id ?? namespace(moduleId, 'job', name),
+    title: overrides.title ?? titleize(name),
+    kind: overrides.kind ?? 'queue',
+    schedule: overrides.schedule,
+    queue: overrides.queue,
+    functionId: overrides.functionId,
+    permissions: overrides.permissions ?? [],
+    retryPolicy: overrides.retryPolicy,
+  }
+}
+
+export function defineStorage(moduleId: string, name: string, overrides: Partial<ModuleStandard20StorageDeclaration> = {}): ModuleStandard20StorageDeclaration {
+  return {
+    id: overrides.id ?? namespace(moduleId, 'storage', name),
+    kind: overrides.kind ?? 'structured-records',
+    version: overrides.version ?? '1.0.0',
+    encrypted: overrides.encrypted ?? false,
+    retention: overrides.retention,
+    quota: overrides.quota,
+  }
+}
+
+export function defineWidget(moduleId: string, name: string, overrides: Partial<ModuleStandard20Widget> = {}): ModuleStandard20Widget {
+  return {
+    id: overrides.id ?? namespace(moduleId, 'widget', name),
+    title: overrides.title ?? titleize(name),
+    surface: overrides.surface ?? 'board',
+    viewId: overrides.viewId,
+    permissions: overrides.permissions ?? [],
+  }
+}
+
+export function defineNavigationContribution(moduleId: string, name: string, overrides: Partial<ModuleStandard20NavigationContribution> = {}): ModuleStandard20NavigationContribution {
+  return {
+    id: overrides.id ?? namespace(moduleId, 'navigation', name),
+    title: overrides.title ?? titleize(name),
+    kind: overrides.kind ?? 'route',
+    target: overrides.target ?? `/module/${moduleId}`,
+    surface: overrides.surface,
+    permissions: overrides.permissions ?? [],
+  }
+}
+
+export function defineUiContribution(moduleId: string, name: string, overrides: Partial<ModuleStandard20UiContribution> = {}): ModuleStandard20UiContribution {
+  return {
+    id: overrides.id ?? namespace(moduleId, 'ui', name),
+    title: overrides.title ?? titleize(name),
+    kind: overrides.kind ?? 'board-card',
+    target: overrides.target ?? moduleId,
+    contract: overrides.contract ?? namespace(moduleId, 'ui-contract', name),
+  }
+}
+
+export function defineAutomationContract(moduleId: string, name: string, overrides: Partial<ModuleStandard20Automation> = {}): ModuleStandard20Automation {
+  return {
+    id: overrides.id ?? namespace(moduleId, 'automation-contract', name),
+    title: overrides.title ?? titleize(name),
+    triggers: overrides.triggers ?? [],
+    actions: overrides.actions ?? [],
+    conditions: overrides.conditions ?? [],
+    variables: overrides.variables,
+    outputs: overrides.outputs,
+  }
+}
+
+export function defineVersionedSection<T extends Record<string, unknown>>(items: T[], version = MODULA_MODULE_STANDARD_2_VERSION): ModuleStandard20VersionedSection<T> {
+  return {version, items}
+}
+
+export function defineOffline(overrides: Partial<ModuleStandard20OfflineDeclaration> = {}): ModuleStandard20OfflineDeclaration {
+  return {
+    version: overrides.version ?? MODULA_MODULE_STANDARD_2_VERSION,
+    capable: overrides.capable ?? false,
+    syncStrategy: overrides.syncStrategy ?? 'none',
+    conflictStrategy: overrides.conflictStrategy,
+    cache: overrides.cache,
+    mergePolicy: overrides.mergePolicy,
+    compression: overrides.compression,
+    encryption: overrides.encryption,
+  }
+}
+
+export function defineRealtime(overrides: Partial<ModuleStandard20RealtimeDeclaration> = {}): ModuleStandard20RealtimeDeclaration {
+  return {
+    version: overrides.version ?? MODULA_MODULE_STANDARD_2_VERSION,
+    events: overrides.events ?? [],
+    presence: overrides.presence ?? false,
+    typing: overrides.typing ?? false,
+    watchers: overrides.watchers ?? false,
+    subscriptions: overrides.subscriptions ?? [],
+    channels: overrides.channels ?? [],
+    reconnect: overrides.reconnect,
+    buffering: overrides.buffering,
+  }
+}
+
+export function defineVersioning(overrides: Partial<ModuleStandard20VersioningDeclaration> = {}): ModuleStandard20VersioningDeclaration {
+  return {
+    version: overrides.version ?? MODULA_MODULE_STANDARD_2_VERSION,
+    moduleVersion: overrides.moduleVersion ?? '1.0.0',
+    standardVersion: overrides.standardVersion ?? MODULA_MODULE_STANDARD_VERSION,
+    publisherVersion: overrides.publisherVersion,
+    protocolVersion: overrides.protocolVersion,
+    backendVersion: overrides.backendVersion,
+    schemaVersion: overrides.schemaVersion,
+    manifestVersion: overrides.manifestVersion,
+    aiVersion: overrides.aiVersion,
+    migrationVersion: overrides.migrationVersion,
+    searchVersion: overrides.searchVersion,
+    runtimeVersion: overrides.runtimeVersion,
+  }
+}
+
+export function defineCompatibilityMatrix(overrides: Partial<ModuleStandard20CompatibilityMatrix> = {}): ModuleStandard20CompatibilityMatrix {
+  return {
+    version: overrides.version ?? MODULA_MODULE_STANDARD_2_VERSION,
+    modulaVersion: overrides.modulaVersion ?? '^1.0.0',
+    greenfieldVersion: overrides.greenfieldVersion ?? '^1.0.0',
+    moduleStandardVersion: overrides.moduleStandardVersion ?? '^2.0.0',
+    runtimeVersion: overrides.runtimeVersion,
+    backendRuntime: overrides.backendRuntime,
+    connectorRuntime: overrides.connectorRuntime,
+    aiRuntime: overrides.aiRuntime,
+    engineRuntime: overrides.engineRuntime,
+    platforms: overrides.platforms ?? ['web'],
+  }
+}
+
+export function defineMarketplace(overrides: Partial<ModuleStandard20MarketplaceDeclaration> = {}): ModuleStandard20MarketplaceDeclaration {
+  return {
+    version: overrides.version ?? MODULA_MODULE_STANDARD_2_VERSION,
+    publisherVerification: overrides.publisherVerification,
+    publisherProfile: overrides.publisherProfile,
+    verifiedBadge: overrides.verifiedBadge ?? false,
+    license: overrides.license,
+    source: overrides.source,
+    repository: overrides.repository,
+    ciStatus: overrides.ciStatus,
+    securityScore: overrides.securityScore,
+    downloads: overrides.downloads,
+    ratings: overrides.ratings,
+    reviews: overrides.reviews,
+    changelog: overrides.changelog,
+    roadmap: overrides.roadmap,
+    support: overrides.support,
+    documentation: overrides.documentation,
+    issueTracker: overrides.issueTracker,
+    pricing: overrides.pricing,
+    requiredRuntimes: overrides.requiredRuntimes ?? [],
+    aiSupport: overrides.aiSupport ?? false,
+    backendMode: overrides.backendMode,
+  }
+}
+
+export function defineEngineReadiness(overrides: Partial<ModuleStandard20EngineReadiness> = {}): ModuleStandard20EngineReadiness {
+  return {
+    version: overrides.version ?? MODULA_MODULE_STANDARD_2_VERSION,
+    engines: overrides.engines ?? ['declarative-ui', 'records', 'actions', 'functions'],
+  }
 }
 
 export function defineModuleBackend(mode: ModuleBackendDefinition['mode'], overrides: Partial<ModuleBackendDefinition> = {}): ModuleBackendDefinition {

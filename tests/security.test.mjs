@@ -1,5 +1,10 @@
 import assert from 'node:assert/strict'
-import {vaultNotesManifestFixture, vaultNotesStandard20ManifestFixture} from '../packages/module-fixtures/dist/index.js'
+import {
+  vaultFormattingStandard21ManifestFixture,
+  vaultNotesManifestFixture,
+  vaultNotesStandard20ManifestFixture,
+  vaultNotesStandard21ManifestFixture,
+} from '../packages/module-fixtures/dist/index.js'
 import {validateModulaModuleManifest} from '../packages/module-validator/dist/index.js'
 
 function codes(result) {
@@ -77,5 +82,33 @@ badPermissionCategory.permissionModel.categories.superuser = [{id: 'records:*', 
 const badPermissionCodes = codes(validateModulaModuleManifest(badPermissionCategory))
 assert.ok(badPermissionCodes.includes('UNKNOWN_PERMISSION_CATEGORY'), 'unknown Standard 2.0 permission categories are rejected')
 assert.ok(badPermissionCodes.includes('WILDCARD_PERMISSION'), 'Standard 2.0 wildcard permissions are rejected')
+
+const extensionProductOn20 = structuredClone(vaultNotesStandard20ManifestFixture)
+extensionProductOn20.extensionProduct = structuredClone(vaultNotesStandard21ManifestFixture.extensionProduct)
+assert.ok(codes(validateModulaModuleManifest(extensionProductOn20)).includes('EXTENSION_PRODUCT_REQUIRES_STANDARD_2_1'), 'extension product contracts require Standard 2.1')
+
+const missingPluginTarget = structuredClone(vaultFormattingStandard21ManifestFixture)
+missingPluginTarget.extensionProduct.targets = []
+assert.ok(codes(validateModulaModuleManifest(missingPluginTarget)).includes('MISSING_EXTENSION_TARGET'), 'targeted products cannot omit their parent')
+
+const selfTarget = structuredClone(vaultFormattingStandard21ManifestFixture)
+selfTarget.extensionProduct.targets[0].productId = selfTarget.id
+assert.ok(codes(validateModulaModuleManifest(selfTarget)).includes('SELF_EXTENSION_TARGET'), 'extension products cannot target themselves')
+
+const wildcardCapability = structuredClone(vaultFormattingStandard21ManifestFixture)
+wildcardCapability.extensionProduct.targets[0].requiredCapabilities = ['notes.*']
+assert.ok(codes(validateModulaModuleManifest(wildcardCapability)).includes('WILDCARD_CONTRACT'), 'extension capabilities cannot use wildcards')
+
+const remoteRuntime = structuredClone(vaultFormattingStandard21ManifestFixture)
+remoteRuntime.extensionProduct.contributions[0].remoteEntry = 'https://example.com/plugin.js'
+assert.ok(codes(validateModulaModuleManifest(remoteRuntime)).includes('PROHIBITED_FIELD'), 'extension contributions cannot inject remote JavaScript')
+
+const arbitraryTarget = structuredClone(vaultFormattingStandard21ManifestFixture)
+arbitraryTarget.extensionProduct.contributions[0].serviceUrl = 'https://whatever-server.example'
+assert.ok(codes(validateModulaModuleManifest(arbitraryTarget)).includes('UNKNOWN_EXTENSION_CONTRIBUTION_PROPERTY'), 'extension contributions cannot declare arbitrary service targets')
+
+const coreCrossContribution = structuredClone(vaultNotesStandard21ManifestFixture)
+coreCrossContribution.extensionProduct.contributions = [structuredClone(vaultFormattingStandard21ManifestFixture.extensionProduct.contributions[0])]
+assert.ok(codes(validateModulaModuleManifest(coreCrossContribution)).includes('MODULE_CROSS_PRODUCT_CONTRIBUTION'), 'core modules cannot masquerade targeted contributions as core UI')
 
 console.log('module-standard security tests passed')

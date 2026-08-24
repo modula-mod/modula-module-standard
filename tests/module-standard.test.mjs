@@ -2,7 +2,12 @@ import assert from 'node:assert/strict'
 import {mkdtemp, readFile, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {vaultNotesManifestFixture, vaultNotesStandard20ManifestFixture} from '../packages/module-fixtures/dist/index.js'
+import {
+  vaultFormattingStandard21ManifestFixture,
+  vaultNotesManifestFixture,
+  vaultNotesStandard20ManifestFixture,
+  vaultNotesStandard21ManifestFixture,
+} from '../packages/module-fixtures/dist/index.js'
 import {referenceModuleBackendDefinition, referenceModuleBackendDiscovery} from '../packages/module-backend-fixtures/dist/index.js'
 import {validateModuleBackendDiscovery} from '../packages/module-backend-protocol/dist/index.js'
 import {createInMemoryModuleBackend, runModuleBackendConformancePlan} from '../packages/module-backend-testing/dist/index.js'
@@ -21,6 +26,8 @@ const exampleManifest = JSON.parse(await readFile(new URL('../examples/vault-not
 
 assert.equal(validateModulaModuleManifest(vaultNotesManifestFixture).valid, true, 'fixture manifest validates')
 assert.equal(validateModulaModuleManifest(vaultNotesStandard20ManifestFixture).valid, true, 'Standard 2.0 fixture manifest validates')
+assert.equal(validateModulaModuleManifest(vaultNotesStandard21ManifestFixture).valid, true, 'Standard 2.1 extensible module fixture validates')
+assert.equal(validateModulaModuleManifest(vaultFormattingStandard21ManifestFixture).valid, true, 'Standard 2.1 targeted plugin fixture validates')
 assert.equal(validateModulaModuleManifest(templateManifest).valid, true, 'template manifest validates')
 assert.equal(validateModulaModuleManifest(exampleManifest).valid, true, 'example manifest validates')
 
@@ -30,6 +37,13 @@ const standard20Graph = resolveModuleDependencyGraph(vaultNotesStandard20Manifes
 ])
 assert.equal(standard20Graph.installable, true, 'Standard 2.0 dependency graph resolves optional and recommended providers')
 assert.equal(standard20Graph.provides.length, 2, 'Standard 2.0 provided contracts are discoverable')
+assert.equal(vaultNotesStandard21ManifestFixture.extensionProduct.kind, 'module', 'module product kind is explicit')
+assert.ok(
+  vaultNotesStandard21ManifestFixture.extensionProduct.extensionPoints.some(point => point.id === 'digital.modula.vault-notes.editor.command'),
+  'module declares namespaced extension points',
+)
+assert.equal(vaultFormattingStandard21ManifestFixture.extensionProduct.targets[0].productId, 'digital.modula.vault-notes', 'plugin target is explicit')
+assert.equal(vaultFormattingStandard21ManifestFixture.extensionProduct.contributions[0].kind, 'editor.command', 'plugin contribution is declarative')
 
 const backendManifest = structuredClone(vaultNotesManifestFixture)
 backendManifest.schemaVersion = '1.1.0'
@@ -167,7 +181,7 @@ try {
   assert.equal(createResult.exitCode, 0, 'CLI create succeeds')
   const validateResult = await runCli(['module', 'validate', join(tempDir, 'manifest.json')])
   assert.equal(validateResult.exitCode, 0, 'CLI validates generated template')
-  assert.match(validateResult.stdout, /standardVersion: 2\.0\.0/, 'CLI generated template uses Standard 2.0')
+  assert.match(validateResult.stdout, /standardVersion: 2\.1\.0/, 'CLI generated template uses Standard 2.1')
   const inspectResult = await runCli(['module', 'inspect', join(tempDir, 'manifest.json')])
   assert.equal(inspectResult.exitCode, 0, 'CLI inspect succeeds')
   assert.match(inspectResult.stdout, /apiOperations: 1/, 'CLI inspect reports Standard 2.0 API operations')

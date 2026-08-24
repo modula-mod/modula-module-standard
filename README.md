@@ -4,14 +4,14 @@ This repository contains the independently versioned Modula Module Standard deve
 
 Packages:
 
-- `@modula/module-standard`: Standard 2.0 contracts, version constants, compatibility helpers, capability negotiation, lifecycle helpers, dependency graph resolution, and checksum utilities.
+- `@modula/module-standard`: Standard 2.1 contracts, version constants, compatibility helpers, capability negotiation, lifecycle helpers, dependency graph resolution, extension-product contracts, and checksum utilities.
 - `@modula/module-validator`: deterministic manifest, compatibility, lifecycle, health, diagnostics, and security validation.
 - `@modula/module-sdk`: contract-only builders for records, views, actions, functions, events, permissions, diagnostics, search, health, automations, services, APIs, hooks, jobs, storage, widgets, offline, realtime, marketplace, and testing.
 - `@modula/create-module`: CLI foundation for `modula module ...` developer workflows.
 - `@modula/module-testing`: development sandbox for validation, capability simulation, event/search/diagnostic inspection, health preview, and migrations.
-- `@modula/module-fixtures`: canonical Standard 1.0 and 2.0 fixtures.
+- `@modula/module-fixtures`: canonical Standard 1.0, 2.0, and 2.1 module/plugin fixtures.
 
-Standard version: `2.0.0`
+Standard version: `2.1.0`
 
 Build and verify:
 

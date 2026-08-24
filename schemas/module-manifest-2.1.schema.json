@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://modula.digital/schemas/module-standard/2.1.0/manifest.schema.json",
+  "title": "Modula Module Standard 2.1 Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "standardVersion", "moduleVersion", "manifestSchemaVersion", "dataSchemaVersion",
+    "id", "slug", "name", "description", "publisher", "compatibility", "lifecycle", "permissions",
+    "capabilities", "records", "views", "actions", "functions", "settings", "events", "automations",
+    "search", "ai", "diagnostics", "health", "migrations", "release", "trust", "sectionVersions"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "2.1.0"},
+    "standardVersion": {"const": "2.1.0"},
+    "moduleVersion": {"$ref": "#/$defs/semver"},
+    "manifestSchemaVersion": {"const": "2.1.0"},
+    "dataSchemaVersion": {"$ref": "#/$defs/semver"},
+    "id": {"$ref": "#/$defs/productId"},
+    "slug": {"type": "string", "pattern": "^[a-z][a-z0-9-]{1,80}$"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 120},
+    "description": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "publisher": {"type": "object"},
+    "compatibility": {"type": "object"},
+    "lifecycle": {"type": "object"},
+    "permissions": {"type": "array"},
+    "capabilities": {"type": "array"},
+    "records": {"type": "array"},
+    "views": {"type": "array"},
+    "actions": {"type": "array"},
+    "functions": {"type": "array"},
+    "settings": {"type": "array"},
+    "events": {"type": "array"},
+    "automations": {"type": "array"},
+    "search": {"type": "array"},
+    "ai": {"type": "array"},
+    "diagnostics": {"type": "object"},
+    "health": {"type": "object"},
+    "migrations": {"type": "object"},
+    "release": {"type": "object"},
+    "trust": {"type": "object"},
+    "backend": {"type": "object"},
+    "sectionVersions": {"type": "object"},
+    "identity": {"$ref": "#/$defs/versionedSection"},
+    "dependencyGraph": {"type": "object"},
+    "serviceRegistry": {"$ref": "#/$defs/versionedSection"},
+    "apiRegistry": {"$ref": "#/$defs/versionedSection"},
+    "eventBus": {"$ref": "#/$defs/versionedSection"},
+    "hookRegistry": {"$ref": "#/$defs/versionedSection"},
+    "capabilityDiscovery": {"type": "object"},
+    "healthModel": {"$ref": "#/$defs/versionedSection"},
+    "diagnosticsModel": {"$ref": "#/$defs/versionedSection"},
+    "metrics": {"$ref": "#/$defs/versionedSection"},
+    "permissionModel": {"type": "object"},
+    "jobRegistry": {"$ref": "#/$defs/versionedSection"},
+    "storageModel": {"$ref": "#/$defs/versionedSection"},
+    "widgetRegistry": {"$ref": "#/$defs/versionedSection"},
+    "navigationRegistry": {"$ref": "#/$defs/versionedSection"},
+    "uiContributions": {"$ref": "#/$defs/versionedSection"},
+    "automationRegistry": {"$ref": "#/$defs/versionedSection"},
+    "offline": {"type": "object"},
+    "realtime": {"type": "object"},
+    "versioning": {"type": "object"},
+    "compatibilityMatrix": {"type": "object"},
+    "marketplace": {"type": "object"},
+    "engineReadiness": {"type": "object"},
+    "exports": {"$ref": "#/$defs/versionedSection"},
+    "imports": {"$ref": "#/$defs/versionedSection"},
+    "synchronization": {"$ref": "#/$defs/versionedSection"},
+    "integrations": {"$ref": "#/$defs/versionedSection"},
+    "billing": {"$ref": "#/$defs/versionedSection"},
+    "telemetry": {"$ref": "#/$defs/versionedSection"},
+    "accessibility": {"$ref": "#/$defs/versionedSection"},
+    "localization": {"$ref": "#/$defs/versionedSection"},
+    "appearance": {"$ref": "#/$defs/versionedSection"},
+    "onboarding": {"$ref": "#/$defs/versionedSection"},
+    "extensionProduct": {"$ref": "#/$defs/extensionProduct"}
+  },
+  "$defs": {
+    "semver": {"type": "string", "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"},
+    "semverRange": {"type": "string", "minLength": 1, "maxLength": 120},
+    "productId": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)+$", "maxLength": 220},
+    "platform": {"enum": ["ios", "android", "web", "desktop", "server"]},
+    "versionedSection": {
+      "type": "object",
+      "required": ["version"],
+      "properties": {
+        "version": {"$ref": "#/$defs/semver"},
+        "items": {"type": "array", "maxItems": 500, "items": {"type": "object"}},
+        "metadata": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "extensionTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["productId", "versionRange"],
+      "properties": {
+        "productId": {"$ref": "#/$defs/productId"},
+        "versionRange": {"$ref": "#/$defs/semverRange"},
+        "requiredCapabilities": {"type": "array", "maxItems": 120, "items": {"$ref": "#/$defs/productId"}},
+        "requiredExtensionPoints": {"type": "array", "maxItems": 120, "items": {"$ref": "#/$defs/productId"}}
+      }
+    },
+    "extensionPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "contributionKinds"],
+      "properties": {
+        "id": {"$ref": "#/$defs/productId"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 160},
+        "contributionKinds": {"type": "array", "minItems": 1, "maxItems": 13, "uniqueItems": true, "items": {"$ref": "#/$defs/contributionKind"}},
+        "requiredCapability": {"$ref": "#/$defs/productId"},
+        "platforms": {"type": "array", "minItems": 1, "maxItems": 5, "uniqueItems": true, "items": {"$ref": "#/$defs/platform"}},
+        "maxContributions": {"type": "integer", "minimum": 1, "maximum": 100}
+      }
+    },
+    "contributionKind": {
+      "enum": [
+        "view.section", "toolbar.action", "editor.command", "editor.attachment", "menu.item",
+        "contextMenu.item", "settings.section", "home.section", "widget", "record.decorator",
+        "search.provider", "composer.tool", "background.action"
+      ]
+    },
+    "availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "platforms": {"type": "array", "minItems": 1, "maxItems": 5, "uniqueItems": true, "items": {"$ref": "#/$defs/platform"}},
+        "requiresOnline": {"type": "boolean"},
+        "requiredCapabilities": {"type": "array", "maxItems": 120, "items": {"$ref": "#/$defs/productId"}}
+      }
+    },
+    "contribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "kind", "extensionPoint"],
+      "anyOf": [
+        {"required": ["actionId"]}, {"required": ["functionId"]}, {"required": ["viewId"]}, {"required": ["widgetId"]}
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/productId"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 160},
+        "kind": {"$ref": "#/$defs/contributionKind"},
+        "extensionPoint": {"$ref": "#/$defs/productId"},
+        "actionId": {"$ref": "#/$defs/productId"},
+        "functionId": {"$ref": "#/$defs/productId"},
+        "viewId": {"$ref": "#/$defs/productId"},
+        "widgetId": {"$ref": "#/$defs/productId"},
+        "requiredCapability": {"$ref": "#/$defs/productId"},
+        "availability": {"$ref": "#/$defs/availability"},
+        "priority": {"type": "integer", "minimum": -1000, "maximum": 1000}
+      }
+    },
+    "extensionProduct": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "kind", "targets", "extensionPoints", "contributions", "retention"],
+      "properties": {
+        "version": {"$ref": "#/$defs/semver"},
+        "kind": {"enum": ["module", "addon", "plugin", "function", "tool", "widget", "connector", "service"]},
+        "targets": {"type": "array", "maxItems": 40, "items": {"$ref": "#/$defs/extensionTarget"}},
+        "extensionPoints": {"type": "array", "maxItems": 200, "items": {"$ref": "#/$defs/extensionPoint"}},
+        "contributions": {"type": "array", "maxItems": 500, "items": {"$ref": "#/$defs/contribution"}},
+        "retention": {
+          "type": "object", "additionalProperties": false, "required": ["defaultMode", "supportsUserChoice"],
+          "properties": {
+            "defaultMode": {"enum": ["KEEP_DATA", "DELETE_DATA"]},
+            "supportsUserChoice": {"type": "boolean"},
+            "metadataNamespace": {"$ref": "#/$defs/productId"}
+          }
+        },
+        "graphPolicy": {
+          "type": "object", "additionalProperties": false, "required": ["maxDepth", "maxNodes"],
+          "properties": {
+            "maxDepth": {"type": "integer", "minimum": 1, "maximum": 16},
+            "maxNodes": {"type": "integer", "minimum": 1, "maximum": 256}
+          }
+        }
+      }
+    }
+  }
+}

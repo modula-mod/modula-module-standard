@@ -304,7 +304,7 @@ export function defineCompatibilityMatrix(overrides: Partial<ModuleStandard20Com
     version: overrides.version ?? MODULA_MODULE_STANDARD_2_VERSION,
     modulaVersion: overrides.modulaVersion ?? '^1.0.0',
     greenfieldVersion: overrides.greenfieldVersion ?? '^1.0.0',
-    moduleStandardVersion: overrides.moduleStandardVersion ?? '^2.0.0',
+    moduleStandardVersion: overrides.moduleStandardVersion ?? '^2.1.0',
     runtimeVersion: overrides.runtimeVersion,
     backendRuntime: overrides.backendRuntime,
     connectorRuntime: overrides.connectorRuntime,

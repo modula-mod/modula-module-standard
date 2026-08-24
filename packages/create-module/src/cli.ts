@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url'
 import {
   DEFAULT_LIFECYCLE_TRANSITIONS,
   MODULA_MANIFEST_SCHEMA_VERSION,
-  MODULA_MODULE_STANDARD_2_SCHEMA_URI,
+  MODULA_MODULE_STANDARD_SCHEMA_URI,
   MODULA_MODULE_STANDARD_VERSION,
   createDefaultModuleSectionVersions,
   extractModuleStandard20Summary,
@@ -242,7 +242,7 @@ async function generateCommand(manifestPath: string | undefined): Promise<Comman
   const manifest = await requireValidManifest(manifestPath)
   return ok(`Generated metadata preview
   openapi: /api/modula/${manifest.id}/openapi.json
-  jsonSchema: ${MODULA_MODULE_STANDARD_2_SCHEMA_URI}
+  jsonSchema: ${MODULA_MODULE_STANDARD_SCHEMA_URI}
   typescript: ${manifest.id}.d.ts
   docs: ${manifest.id}.module-standard.md
   migrationGuide: ${manifest.id}.migration.md
@@ -253,8 +253,8 @@ function schemaCommand(): CommandResult {
   return ok(`Modula Module Standard schema
   standardVersion: ${MODULA_MODULE_STANDARD_VERSION}
   manifestSchemaVersion: ${MODULA_MANIFEST_SCHEMA_VERSION}
-  uri: ${MODULA_MODULE_STANDARD_2_SCHEMA_URI}
-  file: schemas/module-manifest-2.0.schema.json
+  uri: ${MODULA_MODULE_STANDARD_SCHEMA_URI}
+  file: schemas/module-manifest-2.1.schema.json
 `)
 }
 
@@ -580,9 +580,9 @@ function createTemplateManifest(moduleId: string, slug: string, name: string): M
     id: moduleId,
     slug,
     name,
-    description: `${name} generated Module Standard 2.0 template.`,
+    description: `${name} generated Module Standard 2.1 template.`,
     publisher,
-    compatibility: {host: '^1.0.0', runtime: '^1.0.0', standard: '^2.0.0', platforms: ['web', 'ios', 'android']},
+    compatibility: {host: '^1.0.0', runtime: '^1.0.0', standard: '^2.1.0', platforms: ['web', 'ios', 'android']},
     lifecycle: {executionMode: 'declarative', defaultState: 'installed', allowedTransitions: DEFAULT_LIFECYCLE_TRANSITIONS, uninstall: {dataPolicy: 'retain', requiresConfirmation: true}},
     permissions: [{id: 'records:item:read', reason: 'Read module item records.', required: true, risk: 'low', policyMode: 'observe'}],
     capabilities: [
@@ -623,7 +623,7 @@ function createTemplateManifest(moduleId: string, slug: string, name: string): M
     release: {repository: `modula-mod/${slug}`, commitSha: '0123456789abcdef0123456789abcdef01234567', checksum: '2'.repeat(64), licenseEvidence: ['LICENSE'], signing: {signed: false}, channel: 'dev', reviewStatus: 'unreviewed', securityAdvisories: []},
     trust: {publisher, level: 'untrusted', provenance: {sourceVerified: false, checksumVerified: false, signatureVerified: false}, review: {status: 'unreviewed', evidence: []}, security: {advisories: []}},
     backend: {mode: 'greenfield-managed'},
-    sectionVersions: createDefaultModuleSectionVersions(),
+    sectionVersions: createDefaultModuleSectionVersions(MODULA_MODULE_STANDARD_VERSION),
     identity: {version: '2.0.0', metadata: {moduleId, slug, publisherId: publisher.id}},
     dependencyGraph: {version: '2.0.0', requires: [], optional: [], recommended: [], conflicts: [], replaces: [], provides: [{id: `${moduleId}.records.item`, title: `${name} item records`, version: '1.0.0', kind: 'record'}]},
     serviceRegistry: {version: '2.0.0', items: [{id: `${moduleId}.service.search`, title: 'Search Service', version: '1.0.0', kind: 'search', contract: `${moduleId}.contract.search`, permissions: ['records:item:read'], capabilities: ['search']}]},
@@ -643,8 +643,8 @@ function createTemplateManifest(moduleId: string, slug: string, name: string): M
     automationRegistry: {version: '2.0.0', items: []},
     offline: {version: '2.0.0', capable: false, syncStrategy: 'none'},
     realtime: {version: '2.0.0', events: ['item.created'], presence: false, typing: false, watchers: false},
-    versioning: {version: '2.0.0', moduleVersion: '1.0.0', standardVersion: '2.0.0', schemaVersion: '1.0.0', manifestVersion: '2.0.0', runtimeVersion: '1.0.0'},
-    compatibilityMatrix: {version: '2.0.0', modulaVersion: '^1.0.0', greenfieldVersion: '^1.0.0', moduleStandardVersion: '^2.0.0', platforms: ['web', 'ios', 'android']},
+    versioning: {version: '2.1.0', moduleVersion: '1.0.0', standardVersion: '2.1.0', schemaVersion: '1.0.0', manifestVersion: '2.1.0', runtimeVersion: '1.0.0'},
+    compatibilityMatrix: {version: '2.1.0', modulaVersion: '^1.0.0', greenfieldVersion: '^1.0.0', moduleStandardVersion: '^2.1.0', platforms: ['web', 'ios', 'android']},
     marketplace: {version: '2.0.0', publisherProfile: publisher.website, verifiedBadge: false, license: 'UNLICENSED', repository: `modula-mod/${slug}`, pricing: 'free', requiredRuntimes: ['greenfield'], aiSupport: false, backendMode: 'greenfield-managed'},
     engineReadiness: {version: '2.0.0', engines: ['declarative-ui', 'records', 'actions', 'functions']},
     exports: {version: '2.0.0', items: []},
@@ -657,6 +657,15 @@ function createTemplateManifest(moduleId: string, slug: string, name: string): M
     localization: {version: '2.0.0', items: []},
     appearance: {version: '2.0.0', items: []},
     onboarding: {version: '2.0.0', items: []},
+    extensionProduct: {
+      version: '1.0.0',
+      kind: 'module',
+      targets: [],
+      extensionPoints: [],
+      contributions: [],
+      retention: {defaultMode: 'KEEP_DATA', supportsUserChoice: true, metadataNamespace: moduleId},
+      graphPolicy: {maxDepth: 8, maxNodes: 128},
+    },
   } as ModulaModuleManifest & Record<string, unknown>
   return manifest
 }

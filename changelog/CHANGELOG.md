@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0
+
+- Add the universal `module`, `addon`, `plugin`, `function`, `tool`, `widget`, `connector`, and `service` product taxonomy.
+- Add typed target relationships, extension points, declarative contributions, bounded graph policy, and explicit extension retention contracts.
+- Add Standard 2.1 module and formatting-plugin fixtures plus security tests for self-targeting, missing parents, wildcard capabilities, arbitrary service targets, and remote runtime injection.
+- Accept conjunctive semantic-version ranges such as `>=1.1.0 <2.0.0`.
+- Keep Standard 1.0, 1.1, 1.2, and 2.0 manifests valid unchanged.
+
 ## 2.0.0
 
 - Add independently versioned manifest sections through `sectionVersions`.

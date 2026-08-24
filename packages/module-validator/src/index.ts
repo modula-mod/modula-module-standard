@@ -7,6 +7,8 @@ import {
   MODULA_MANIFEST_SCHEMA_SUPPORTED_VERSIONS,
   MODULA_MODULE_STANDARD_2_VERSION,
   MODULA_MODULE_STANDARD_SUPPORTED_VERSIONS,
+  MODULA_EXTENSION_CONTRIBUTION_KINDS,
+  MODULA_EXTENSION_PRODUCT_KINDS,
   MODULE_STANDARD_20_HEALTH_STATES,
   MODULE_STANDARD_20_PERMISSION_CATEGORIES,
   MODULE_STANDARD_20_SECTION_NAMES,
@@ -124,6 +126,7 @@ const ROOT_KEYS = new Set([
   'localization',
   'appearance',
   'onboarding',
+  'extensionProduct',
 ])
 
 const PLATFORMS = new Set<ModulaPlatform>(['ios', 'android', 'web', 'server', 'desktop'])
@@ -1118,11 +1121,15 @@ const STANDARD_20_OFFLINE_SYNC = new Set(['none', 'manual', 'background', 'realt
 const STANDARD_20_CONFLICT_STRATEGIES = new Set(['client-wins', 'server-wins', 'merge', 'manual-review'])
 const STANDARD_20_COMPAT_PLATFORMS = new Set(['ios', 'android', 'web', 'desktop', 'server'])
 const STANDARD_20_ENGINES = new Set(['declarative-ui', 'records', 'actions', 'functions', 'ai', 'automation', 'media', 'documents', 'game', 'webgpu', 'spatial', 'unity', 'godot', 'custom-native'])
+const EXTENSION_PRODUCT_KINDS = new Set<string>(MODULA_EXTENSION_PRODUCT_KINDS)
+const EXTENSION_CONTRIBUTION_KINDS = new Set<string>(MODULA_EXTENSION_CONTRIBUTION_KINDS)
+const EXTENSION_TARGET_REQUIRED_KINDS = new Set(['addon', 'plugin', 'function', 'tool', 'widget'])
+const EXTENSION_PLATFORMS = new Set(['ios', 'android', 'web', 'desktop', 'server'])
 
 function validateStandard20Extensions(input: Record<string, unknown>, moduleId: string, add: AddIssue) {
-  const isStandard20 = input.standardVersion === MODULA_MODULE_STANDARD_2_VERSION
+  const isStandard2 = input.standardVersion === MODULA_MODULE_STANDARD_2_VERSION || input.standardVersion === MODULA_MODULE_STANDARD_VERSION
   const hasStandard20Extensions = input.sectionVersions !== undefined || STANDARD_20_EXTENSION_KEYS.some(key => input[key] !== undefined)
-  if (!isStandard20) {
+  if (!isStandard2) {
     if (hasStandard20Extensions) {
       add('$.standardVersion', 'STANDARD_2_FIELDS_REQUIRE_2_0', 'Standard 2.0 extension sections require standardVersion 2.0.0')
     }
@@ -1159,6 +1166,164 @@ function validateStandard20Extensions(input: Record<string, unknown>, moduleId: 
   validateEngineReadiness(input.engineReadiness, '$.engineReadiness', add)
   for (const key of ['exports', 'imports', 'synchronization', 'integrations', 'billing', 'telemetry', 'accessibility', 'localization', 'appearance', 'onboarding'] as const) {
     validateVersionedSection(input[key], `$.${key}`, add)
+  }
+  validateExtensionProduct(input.extensionProduct, '$.extensionProduct', input, moduleId, add)
+}
+
+function validateExtensionProduct(
+  value: unknown,
+  path: string,
+  manifest: Record<string, unknown>,
+  productId: string,
+  add: AddIssue,
+) {
+  if (value === undefined) return
+  if (manifest.standardVersion !== MODULA_MODULE_STANDARD_VERSION) {
+    add(path, 'EXTENSION_PRODUCT_REQUIRES_STANDARD_2_1', `extensionProduct requires standardVersion ${MODULA_MODULE_STANDARD_VERSION}`)
+  }
+  if (!isRecord(value)) {
+    add(path, 'INVALID_EXTENSION_PRODUCT', 'extensionProduct must be an object')
+    return
+  }
+  rejectUnknownProperties(value, path, new Set(['version', 'kind', 'targets', 'extensionPoints', 'contributions', 'retention', 'graphPolicy']), 'UNKNOWN_EXTENSION_PRODUCT_PROPERTY', add)
+  if (!isSemver(value.version)) add(`${path}.version`, 'INVALID_SEMVER', 'extensionProduct version must be semantic')
+  const kind = String(value.kind)
+  if (!EXTENSION_PRODUCT_KINDS.has(kind)) add(`${path}.kind`, 'INVALID_EXTENSION_PRODUCT_KIND', 'Unsupported extension product kind')
+
+  if (!Array.isArray(value.targets) || value.targets.length > 40) {
+    add(`${path}.targets`, 'INVALID_EXTENSION_TARGETS', 'targets must be a bounded array')
+  } else {
+    if (EXTENSION_TARGET_REQUIRED_KINDS.has(kind) && value.targets.length === 0) {
+      add(`${path}.targets`, 'MISSING_EXTENSION_TARGET', `${kind} products must target at least one product`)
+    }
+    if (kind === 'module' && value.targets.length > 0) {
+      add(`${path}.targets`, 'MODULE_TARGETS_PRODUCT', 'A module is a first-class product and must not require a target product')
+    }
+    value.targets.forEach((target, index) => validateExtensionTarget(target, `${path}.targets[${index}]`, productId, add))
+  }
+
+  if (!Array.isArray(value.extensionPoints) || value.extensionPoints.length > 200) {
+    add(`${path}.extensionPoints`, 'INVALID_EXTENSION_POINTS', 'extensionPoints must be a bounded array')
+  } else {
+    value.extensionPoints.forEach((point, index) => validateExtensionPoint(point, `${path}.extensionPoints[${index}]`, productId, add))
+  }
+
+  if (!Array.isArray(value.contributions) || value.contributions.length > 500) {
+    add(`${path}.contributions`, 'INVALID_EXTENSION_CONTRIBUTIONS', 'contributions must be a bounded array')
+  } else {
+    if (kind === 'module' && value.contributions.length > 0) {
+      add(`${path}.contributions`, 'MODULE_CROSS_PRODUCT_CONTRIBUTION', 'Core module UI belongs in its existing registries; extensionProduct contributions are for targeted products')
+    }
+    value.contributions.forEach((contribution, index) => validateExtensionContribution(contribution, `${path}.contributions[${index}]`, productId, add))
+  }
+
+  validateExtensionRetention(value.retention, `${path}.retention`, productId, add)
+  if (value.graphPolicy !== undefined) {
+    if (!isRecord(value.graphPolicy)) {
+      add(`${path}.graphPolicy`, 'INVALID_EXTENSION_GRAPH_POLICY', 'graphPolicy must be an object')
+    } else {
+      rejectUnknownProperties(value.graphPolicy, `${path}.graphPolicy`, new Set(['maxDepth', 'maxNodes']), 'UNKNOWN_EXTENSION_GRAPH_POLICY_PROPERTY', add)
+      validateIntegerRange(value.graphPolicy.maxDepth, `${path}.graphPolicy.maxDepth`, 1, 16, add)
+      validateIntegerRange(value.graphPolicy.maxNodes, `${path}.graphPolicy.maxNodes`, 1, 256, add)
+    }
+  }
+}
+
+function validateExtensionTarget(value: unknown, path: string, productId: string, add: AddIssue) {
+  if (!isRecord(value)) {
+    add(path, 'INVALID_EXTENSION_TARGET', 'Extension targets must be objects')
+    return
+  }
+  rejectUnknownProperties(value, path, new Set(['productId', 'versionRange', 'requiredCapabilities', 'requiredExtensionPoints']), 'UNKNOWN_EXTENSION_TARGET_PROPERTY', add)
+  checkString(value.productId, `${path}.productId`, 1, 180, add)
+  if (typeof value.productId === 'string' && !ID_PATTERN.test(value.productId)) add(`${path}.productId`, 'INVALID_PRODUCT_ID', 'Target productId must be a lowercase dotted identifier')
+  if (value.productId === productId) add(`${path}.productId`, 'SELF_EXTENSION_TARGET', 'A product cannot extend itself')
+  if (!isSemverRange(value.versionRange)) add(`${path}.versionRange`, 'INVALID_SEMVER_RANGE', 'Target versionRange must be semantic')
+  if (value.requiredCapabilities !== undefined) validateSafeContractIds(value.requiredCapabilities, `${path}.requiredCapabilities`, 120, add)
+  if (value.requiredExtensionPoints !== undefined) validateSafeContractIds(value.requiredExtensionPoints, `${path}.requiredExtensionPoints`, 120, add)
+}
+
+function validateExtensionPoint(value: unknown, path: string, productId: string, add: AddIssue) {
+  if (!isRecord(value)) {
+    add(path, 'INVALID_EXTENSION_POINT', 'Extension points must be objects')
+    return
+  }
+  rejectUnknownProperties(value, path, new Set(['id', 'title', 'contributionKinds', 'requiredCapability', 'platforms', 'maxContributions']), 'UNKNOWN_EXTENSION_POINT_PROPERTY', add)
+  validateNamespacedId(value.id, `${path}.id`, productId, add)
+  checkString(value.title, `${path}.title`, 1, 160, add)
+  validateStringEnumArray(value.contributionKinds, `${path}.contributionKinds`, EXTENSION_CONTRIBUTION_KINDS, MODULA_EXTENSION_CONTRIBUTION_KINDS.length, add)
+  if (value.requiredCapability !== undefined) validateSafeContractId(value.requiredCapability, `${path}.requiredCapability`, add)
+  if (value.platforms !== undefined) validateStringEnumArray(value.platforms, `${path}.platforms`, EXTENSION_PLATFORMS, 5, add)
+  if (value.maxContributions !== undefined) validateIntegerRange(value.maxContributions, `${path}.maxContributions`, 1, 100, add)
+}
+
+function validateExtensionContribution(value: unknown, path: string, productId: string, add: AddIssue) {
+  if (!isRecord(value)) {
+    add(path, 'INVALID_EXTENSION_CONTRIBUTION', 'Extension contributions must be objects')
+    return
+  }
+  rejectUnknownProperties(
+    value,
+    path,
+    new Set(['id', 'title', 'kind', 'extensionPoint', 'actionId', 'functionId', 'viewId', 'widgetId', 'requiredCapability', 'availability', 'priority']),
+    'UNKNOWN_EXTENSION_CONTRIBUTION_PROPERTY',
+    add,
+  )
+  validateNamespacedId(value.id, `${path}.id`, productId, add)
+  checkString(value.title, `${path}.title`, 1, 160, add)
+  if (!EXTENSION_CONTRIBUTION_KINDS.has(String(value.kind))) add(`${path}.kind`, 'INVALID_EXTENSION_CONTRIBUTION_KIND', 'Unsupported extension contribution kind')
+  validateSafeContractId(value.extensionPoint, `${path}.extensionPoint`, add)
+  for (const field of ['actionId', 'functionId', 'viewId', 'widgetId'] as const) {
+    if (value[field] !== undefined) validateNamespacedId(value[field], `${path}.${field}`, productId, add)
+  }
+  if (![value.actionId, value.functionId, value.viewId, value.widgetId].some(item => typeof item === 'string')) {
+    add(path, 'MISSING_CONTRIBUTION_CONTRACT', 'A contribution must reference a declared action, function, view, or widget contract')
+  }
+  if (value.requiredCapability !== undefined) validateSafeContractId(value.requiredCapability, `${path}.requiredCapability`, add)
+  if (value.priority !== undefined) validateIntegerRange(value.priority, `${path}.priority`, -1000, 1000, add)
+  if (value.availability !== undefined) {
+    if (!isRecord(value.availability)) {
+      add(`${path}.availability`, 'INVALID_CONTRIBUTION_AVAILABILITY', 'availability must be an object')
+    } else {
+      rejectUnknownProperties(value.availability, `${path}.availability`, new Set(['platforms', 'requiresOnline', 'requiredCapabilities']), 'UNKNOWN_CONTRIBUTION_AVAILABILITY_PROPERTY', add)
+      if (value.availability.platforms !== undefined) validateStringEnumArray(value.availability.platforms, `${path}.availability.platforms`, EXTENSION_PLATFORMS, 5, add)
+      if (value.availability.requiresOnline !== undefined && typeof value.availability.requiresOnline !== 'boolean') add(`${path}.availability.requiresOnline`, 'INVALID_BOOLEAN', 'requiresOnline must be boolean')
+      if (value.availability.requiredCapabilities !== undefined) validateSafeContractIds(value.availability.requiredCapabilities, `${path}.availability.requiredCapabilities`, 120, add)
+    }
+  }
+}
+
+function validateExtensionRetention(value: unknown, path: string, productId: string, add: AddIssue) {
+  if (!isRecord(value)) {
+    add(path, 'INVALID_EXTENSION_RETENTION', 'retention must be an object')
+    return
+  }
+  rejectUnknownProperties(value, path, new Set(['defaultMode', 'supportsUserChoice', 'metadataNamespace']), 'UNKNOWN_EXTENSION_RETENTION_PROPERTY', add)
+  if (!['KEEP_DATA', 'DELETE_DATA'].includes(String(value.defaultMode))) add(`${path}.defaultMode`, 'INVALID_RETENTION_MODE', 'defaultMode must be KEEP_DATA or DELETE_DATA')
+  if (typeof value.supportsUserChoice !== 'boolean') add(`${path}.supportsUserChoice`, 'INVALID_BOOLEAN', 'supportsUserChoice must be boolean')
+  if (value.metadataNamespace !== undefined) {
+    checkString(value.metadataNamespace, `${path}.metadataNamespace`, 1, 180, add)
+    if (value.metadataNamespace !== productId) add(`${path}.metadataNamespace`, 'INVALID_METADATA_NAMESPACE', 'Extension metadata namespace must equal the owning product ID')
+  }
+}
+
+function validateSafeContractIds(value: unknown, path: string, maxItems: number, add: AddIssue) {
+  if (!Array.isArray(value) || value.length > maxItems) {
+    add(path, 'INVALID_CONTRACT_IDS', `${path} must be a bounded identifier array`)
+    return
+  }
+  value.forEach((item, index) => validateSafeContractId(item, `${path}[${index}]`, add))
+}
+
+function validateSafeContractId(value: unknown, path: string, add: AddIssue) {
+  checkString(value, path, 1, 220, add)
+  if (typeof value === 'string' && !ID_PATTERN.test(value)) add(path, 'INVALID_CONTRACT_ID', 'Contract identifiers must be lowercase and dot/kebab separated')
+  if (typeof value === 'string' && value.includes('*')) add(path, 'WILDCARD_CONTRACT', 'Wildcard capability and extension-point identifiers are prohibited')
+}
+
+function rejectUnknownProperties(value: Record<string, unknown>, path: string, allowed: Set<string>, code: string, add: AddIssue) {
+  for (const key of Object.keys(value)) {
+    if (!allowed.has(key)) add(`${path}.${key}`, code, `Unknown property ${key}`)
   }
 }
 

@@ -46,3 +46,5 @@ Standard 1.2.0 is additive:
 ```
 
 It adds provider-neutral `ai[].productActions[]` declarations for user-triggered AI workflows. Standard 1.0 and 1.1 manifests remain valid unchanged.
+
+Standard 2.1.0 is an additive evolution of Standard 2.0. It adds the optional `extensionProduct` contract for product kinds, target relationships, extension points, contributions, graph bounds, and retention semantics. Standard 1.x and 2.0 manifests remain valid unchanged.

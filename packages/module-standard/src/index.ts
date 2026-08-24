@@ -1,25 +1,29 @@
 import {createHash} from 'node:crypto'
 
-export const MODULA_MODULE_STANDARD_VERSION = '2.0.0' as const
-export const MODULA_MANIFEST_SCHEMA_VERSION = '2.0.0' as const
+export const MODULA_MODULE_STANDARD_VERSION = '2.1.0' as const
+export const MODULA_MANIFEST_SCHEMA_VERSION = '2.1.0' as const
 export const MODULA_DATA_SCHEMA_VERSION = '1.0.0' as const
-export const MODULA_MODULE_STANDARD_SCHEMA_URI = 'https://modula.digital/schemas/module-standard/2.0.0/manifest.schema.json' as const
-export const MODULA_MODULE_STANDARD_PREVIOUS_VERSION = '1.2.0' as const
+export const MODULA_MODULE_STANDARD_SCHEMA_URI = 'https://modula.digital/schemas/module-standard/2.1.0/manifest.schema.json' as const
+export const MODULA_MODULE_STANDARD_PREVIOUS_VERSION = '2.0.0' as const
+export const MODULA_MODULE_STANDARD_1_2_VERSION = '1.2.0' as const
 export const MODULA_MODULE_STANDARD_1_1_VERSION = '1.1.0' as const
 export const MODULA_MODULE_STANDARD_LEGACY_VERSION = '1.0.0' as const
-export const MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION = '1.2.0' as const
+export const MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION = '2.0.0' as const
+export const MODULA_MANIFEST_SCHEMA_1_2_VERSION = '1.2.0' as const
 export const MODULA_MANIFEST_SCHEMA_1_1_VERSION = '1.1.0' as const
 export const MODULA_MANIFEST_SCHEMA_LEGACY_VERSION = '1.0.0' as const
 export const MODULA_MODULE_BACKEND_PROTOCOL_VERSION = '1.0.0' as const
 export const MODULA_MODULE_STANDARD_SUPPORTED_VERSIONS = [
   MODULA_MODULE_STANDARD_LEGACY_VERSION,
   MODULA_MODULE_STANDARD_1_1_VERSION,
+  MODULA_MODULE_STANDARD_1_2_VERSION,
   MODULA_MODULE_STANDARD_PREVIOUS_VERSION,
   MODULA_MODULE_STANDARD_VERSION,
 ] as const
 export const MODULA_MANIFEST_SCHEMA_SUPPORTED_VERSIONS = [
   MODULA_MANIFEST_SCHEMA_LEGACY_VERSION,
   MODULA_MANIFEST_SCHEMA_1_1_VERSION,
+  MODULA_MANIFEST_SCHEMA_1_2_VERSION,
   MODULA_MANIFEST_SCHEMA_PREVIOUS_VERSION,
   MODULA_MANIFEST_SCHEMA_VERSION,
 ] as const
@@ -695,6 +699,7 @@ export type ModulaModuleManifest = {
   release: ReleaseMetadata
   trust: TrustMetadata
   backend?: ModuleBackendDefinition
+  extensionProduct?: import('./standard-2.js').ModulaExtensionProduct
 }
 
 export type HostCapability = {
@@ -745,7 +750,7 @@ export const DEFAULT_LIFECYCLE_TRANSITIONS: LifecycleTransition[] = [
 
 const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/
 const SEMVER_RANGE_PATTERN =
-  /^(\*|latest|(?:[\^~])?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\s+(?:>=|<=|>|<|=)?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?)*|(?:>=|<=|>|<|=)(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?)$/
+  /^(\*|latest|(?:[\^~])?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?|(?:(?:>=|<=|>|<|=)?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?)(?:\s+(?:>=|<=|>|<|=)?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?)*)$/
 
 export function isSemver(value: unknown): value is string {
   return typeof value === 'string' && SEMVER_PATTERN.test(value)

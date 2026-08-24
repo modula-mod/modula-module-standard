@@ -2,6 +2,98 @@ export const MODULA_MODULE_STANDARD_2_VERSION = '2.0.0' as const
 export const MODULA_MANIFEST_SCHEMA_2_VERSION = '2.0.0' as const
 export const MODULA_MODULE_STANDARD_2_SCHEMA_URI = 'https://modula.digital/schemas/module-standard/2.0.0/manifest.schema.json' as const
 
+export const MODULA_EXTENSION_PRODUCT_KINDS = [
+  'module',
+  'addon',
+  'plugin',
+  'function',
+  'tool',
+  'widget',
+  'connector',
+  'service',
+] as const
+
+export type ModulaExtensionProductKind = (typeof MODULA_EXTENSION_PRODUCT_KINDS)[number]
+
+export const MODULA_EXTENSION_CONTRIBUTION_KINDS = [
+  'view.section',
+  'toolbar.action',
+  'editor.command',
+  'editor.attachment',
+  'menu.item',
+  'contextMenu.item',
+  'settings.section',
+  'home.section',
+  'widget',
+  'record.decorator',
+  'search.provider',
+  'composer.tool',
+  'background.action',
+] as const
+
+export type ModulaExtensionContributionKind = (typeof MODULA_EXTENSION_CONTRIBUTION_KINDS)[number]
+export type ModulaExtensionRetentionMode = 'KEEP_DATA' | 'DELETE_DATA'
+
+export type ModulaExtensionProductTarget = {
+  productId: string
+  versionRange: string
+  requiredCapabilities?: string[]
+  requiredExtensionPoints?: string[]
+}
+
+export type ModulaExtensionPoint = {
+  id: string
+  title: string
+  contributionKinds: ModulaExtensionContributionKind[]
+  requiredCapability?: string
+  platforms?: Array<'ios' | 'android' | 'web' | 'desktop' | 'server'>
+  maxContributions?: number
+}
+
+export type ModulaExtensionContribution = {
+  id: string
+  title: string
+  kind: ModulaExtensionContributionKind
+  extensionPoint: string
+  actionId?: string
+  functionId?: string
+  viewId?: string
+  widgetId?: string
+  requiredCapability?: string
+  availability?: {
+    platforms?: Array<'ios' | 'android' | 'web' | 'desktop' | 'server'>
+    requiresOnline?: boolean
+    requiredCapabilities?: string[]
+  }
+  priority?: number
+}
+
+export type ModulaExtensionRetention = {
+  defaultMode: ModulaExtensionRetentionMode
+  supportsUserChoice: boolean
+  metadataNamespace?: string
+}
+
+export type ModulaExtensionGraphPolicy = {
+  maxDepth: number
+  maxNodes: number
+}
+
+/**
+ * Registry product metadata for Standard 2.x manifests. It extends the existing
+ * dependency, capability, backend, function, widget, and UI registries; it does
+ * not introduce a second execution or permission model.
+ */
+export type ModulaExtensionProduct = {
+  version: string
+  kind: ModulaExtensionProductKind
+  targets: ModulaExtensionProductTarget[]
+  extensionPoints: ModulaExtensionPoint[]
+  contributions: ModulaExtensionContribution[]
+  retention: ModulaExtensionRetention
+  graphPolicy?: ModulaExtensionGraphPolicy
+}
+
 export const MODULE_STANDARD_20_SECTION_NAMES = [
   'identity',
   'lifecycle',
@@ -471,9 +563,9 @@ export type ModuleStandard20DependencyResolution = {
 
 const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/
 const SEMVER_RANGE_PATTERN =
-  /^(\*|latest|(?:[\^~])?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\s+(?:>=|<=|>|<|=)?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?)*|(?:>=|<=|>|<|=)(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?)$/
+  /^(\*|latest|(?:[\^~])?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?|(?:(?:>=|<=|>|<|=)?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?)(?:\s+(?:>=|<=|>|<|=)?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?)*)$/
 
-export function createDefaultModuleSectionVersions(version = MODULA_MODULE_STANDARD_2_VERSION): ModuleStandard20SectionVersions {
+export function createDefaultModuleSectionVersions(version: string = MODULA_MODULE_STANDARD_2_VERSION): ModuleStandard20SectionVersions {
   return Object.fromEntries(MODULE_STANDARD_20_SECTION_NAMES.map(section => [section, version])) as ModuleStandard20SectionVersions
 }
 

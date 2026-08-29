@@ -23,6 +23,13 @@ import {validateModulaModuleManifest} from '../packages/module-validator/dist/in
 
 const templateManifest = JSON.parse(await readFile(new URL('../templates/basic-module/manifest.json', import.meta.url), 'utf8'))
 const exampleManifest = JSON.parse(await readFile(new URL('../examples/vault-notes/manifest.json', import.meta.url), 'utf8'))
+const frontendProfile = await readFile(new URL('../docs/module-frontend-profile.md', import.meta.url), 'utf8')
+
+assert.match(frontendProfile, /application module owns its product-specific frontend/i)
+assert.match(frontendProfile, /authoritative for the generic frontend schema/i)
+assert.match(frontendProfile, /explicitly declares a\s+headless module/i)
+assert.match(frontendProfile, /arbitrary JavaScript\/JSX/i)
+assert.doesNotMatch(frontendProfile, /VaultNotesEditor|if \(productId ===/)
 
 assert.equal(validateModulaModuleManifest(vaultNotesManifestFixture).valid, true, 'fixture manifest validates')
 assert.equal(validateModulaModuleManifest(vaultNotesStandard20ManifestFixture).valid, true, 'Standard 2.0 fixture manifest validates')

@@ -21,3 +21,7 @@ pnpm verify
 ```
 
 Modules must not call AI providers, run arbitrary host code, or bypass Modula permissions directly. They declare contracts; the Modula host negotiates capability, permission, policy, AI gateway, search, diagnostics, health, lifecycle, and trust behavior.
+
+Application modules own their product frontend through MPS. `modula-latest`
+owns the generic Shell and Product Host, not module-specific screens. See
+[`docs/module-frontend-profile.md`](docs/module-frontend-profile.md).

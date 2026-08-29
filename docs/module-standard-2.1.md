@@ -49,6 +49,12 @@ Contributions are declarative references to existing action, function, view, or 
 
 An allowed UI contribution is not a data grant. The host must independently check installation state, target compatibility, declared contribution, capability grant, resource ownership, platform, and invocation scope.
 
+Contribution presentation and standalone module views are product-owned MPS
+frontend artifacts. Standard 2.1 defines the module/extension semantics; MPS
+defines the frontend representation. The Shell renders both through generic
+host primitives and must not contain product-name UI branches. See
+[module-frontend-profile.md](module-frontend-profile.md).
+
 ## Security invariants
 
 - Extensions never import another product implementation or query another product database.

@@ -22,3 +22,8 @@ Required top-level areas:
 - optional Standard 2.0 discovery sections.
 
 Manifests are strict. Unknown root fields and prohibited runtime fields are rejected.
+
+The module's generic frontend contract is owned by MPS, not duplicated in this
+manifest schema. A normal user-facing module publishes its own validated MPS
+frontend artifact; only an explicitly headless module may use
+`frontend.mode: none`. See [module-frontend-profile.md](module-frontend-profile.md).

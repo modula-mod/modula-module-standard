@@ -28,7 +28,8 @@ const frontendProfile = await readFile(new URL('../docs/module-frontend-profile.
 assert.match(frontendProfile, /application module owns its product-specific frontend/i)
 assert.match(frontendProfile, /authoritative for the generic frontend schema/i)
 assert.match(frontendProfile, /explicitly declares a\s+headless module/i)
-assert.match(frontendProfile, /arbitrary JavaScript\/JSX/i)
+assert.match(frontendProfile, /controlled TypeScript\/TSX/i)
+assert.match(frontendProfile, /arbitrary executable\s+JavaScript\/JSX/i)
 assert.doesNotMatch(frontendProfile, /VaultNotesEditor|if \(productId ===/)
 
 assert.equal(validateModulaModuleManifest(vaultNotesManifestFixture).valid, true, 'fixture manifest validates')

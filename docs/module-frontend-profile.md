@@ -16,6 +16,17 @@ A normal new module must not require product-specific frontend source in the
 Modula Shell repository. The module repository contains the experience and
 publishes it as an immutable, validated MPS frontend artifact.
 
+## Authoring and runtime boundary
+
+Module developers may author their experience in controlled TypeScript/TSX
+using `@modula/product-ui`, including local pure components. The MPS compiler
+evaluates no product code at runtime: it statically lowers that source into the
+versioned declarative frontend artifact included in the product release.
+
+The host only receives and renders the validated artifact. A device never
+downloads or evaluates product TSX, arbitrary JavaScript, arbitrary native
+libraries, or an untrusted frontend bundle.
+
 ## Module profile rules
 
 For `identity.kind: module`:
@@ -52,10 +63,11 @@ platform rollback policy.
 
 ## Security
 
-Module frontends must not include arbitrary JavaScript/JSX, raw HTML, arbitrary
-CSS/style objects, remote bundles, dynamic native implementations, undeclared
-network access, secrets, direct cross-product storage access, or generic
-WebView product UI.
+Installed module frontend artifacts must not include arbitrary executable
+JavaScript/JSX, raw HTML, arbitrary CSS/style objects, remote bundles, dynamic
+native implementations, undeclared network access, secrets, direct
+cross-product storage access, or generic WebView product UI. Controlled TSX is
+an authoring input only and is statically compiled before publication.
 
 All record, settings, function, service and capability actions pass through the
 host/Greenfield policy boundary and remain account/product scoped.

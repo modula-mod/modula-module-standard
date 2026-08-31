@@ -25,3 +25,7 @@ Modules must not call AI providers, run arbitrary host code, or bypass Modula pe
 Application modules own their product frontend through MPS. `modula-latest`
 owns the generic Shell and Product Host, not module-specific screens. See
 [`docs/module-frontend-profile.md`](docs/module-frontend-profile.md).
+
+Developers may author controlled `@modula/product-ui` TypeScript/TSX; MPS
+compiles it into a deterministic, validated frontend artifact. The installed
+host renders that artifact and never evaluates product source code.
